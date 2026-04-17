@@ -830,32 +830,15 @@
             topImg.onload = function() { imgsReady++; };
             baseImg.onload = function() { imgsReady++; };
 
-            // Trail of cursor positions — smooth liquid stroke
-            var trail = [];
-            var maxTrail = 120;
-            var trailLifetime = 250;
-
             // Smooth cursor
             var targetX = -999, targetY = -999;
             var smoothX = -999, smoothY = -999;
             var prevX = -999, prevY = -999;
             var isActive = false;
-            var frame = 0;
 
-            // Organic blob — 16 control points with lively wobble for liquid shape
-            var blobN = 16;
-            var blobOffsets = [];
-            for (var i = 0; i < blobN; i++) {
-                blobOffsets.push({
-                    base: (Math.random() - 0.5) * 0.28,
-                    phase: Math.random() * Math.PI * 2,
-                    speed: 0.025 + Math.random() * 0.04,
-                    amp: 0.06 + Math.random() * 0.09,
-                    phase2: Math.random() * Math.PI * 2,
-                    speed2: 0.01 + Math.random() * 0.015,
-                    amp2: 0.03 + Math.random() * 0.04
-                });
-            }
+            // Persistent mask — accumulates brush strokes, never cleared
+            var maskCanvas = document.createElement('canvas');
+            var maskCtx = maskCanvas.getContext('2d');
 
             function resize() {
                 dpr = window.devicePixelRatio || 1;
@@ -866,17 +849,19 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                blobRadius = W <= 480 ? 90 : W <= 768 ? 120 : 260;
+                blobRadius = W <= 480 ? 70 : W <= 768 ? 100 : 180;
+                maskCanvas.width = W * dpr;
+                maskCanvas.height = H * dpr;
+                maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
             resize();
             window.addEventListener('resize', resize);
 
-            // Cover-fit calculation matching CSS object-fit:cover + object-position:center top
             function getCoverRect(img) {
                 var iw = img.naturalWidth, ih = img.naturalHeight;
                 var scale = Math.max(W / iw, H / ih);
                 var dw = iw * scale, dh = ih * scale;
-                return { x: (W - dw) / 2, y: 0, w: dw, h: dh }; // top-aligned like CSS
+                return { x: (W - dw) / 2, y: 0, w: dw, h: dh };
             }
 
             // Input
@@ -905,173 +890,81 @@
                 isActive = true;
             });
 
-            // Draw organic wobbly blob shape — Catmull-Rom spline with layered wobble
-            function drawOrganicBlob(targetCtx, cx, cy, radius, vx, vy) {
-                var speed = Math.sqrt(vx * vx + vy * vy);
-                var nx = speed > 0.5 ? vx / speed : 0;
-                var ny = speed > 0.5 ? vy / speed : 0;
-                var stretch = Math.min(speed * 0.6, radius * 0.35);
-                var squish = Math.min(speed * 0.15, radius * 0.1);
-
-                var pts = [];
-                for (var i = 0; i < blobN; i++) {
-                    var angle = (i / blobN) * Math.PI * 2;
-                    var cosA = Math.cos(angle), sinA = Math.sin(angle);
-                    var o = blobOffsets[i];
-                    // Two layers of wobble — fast jitter + slow undulation = organic liquid
-                    var wobble = o.base
-                        + Math.sin(frame * o.speed + o.phase) * o.amp
-                        + Math.sin(frame * o.speed2 + o.phase2) * o.amp2;
-                    var dot = cosA * nx + sinA * ny;
-                    var cross = Math.abs(-sinA * nx + cosA * ny);
-                    var r = radius * (1 + wobble) + dot * stretch - cross * squish;
-                    r = Math.max(radius * 0.6, r);
-                    pts.push({ x: cx + cosA * r, y: cy + sinA * r });
-                }
-
-                // Smooth Catmull-Rom spline through points
-                targetCtx.beginPath();
-                for (var i = 0; i < pts.length; i++) {
-                    var p0 = pts[(i - 1 + pts.length) % pts.length];
-                    var p1 = pts[i];
-                    var p2 = pts[(i + 1) % pts.length];
-                    var p3 = pts[(i + 2) % pts.length];
-                    if (i === 0) targetCtx.moveTo(p1.x, p1.y);
-                    targetCtx.bezierCurveTo(
-                        p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6,
-                        p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6,
-                        p2.x, p2.y
-                    );
-                }
-                targetCtx.closePath();
-            }
-
-            // Draw smooth bezier path through an array of {x,y} points
-            function drawSmoothPath(targetCtx, points) {
-                if (points.length < 2) return;
-                targetCtx.beginPath();
-                targetCtx.moveTo(points[0].x, points[0].y);
-                if (points.length === 2) {
-                    targetCtx.lineTo(points[1].x, points[1].y);
-                } else {
-                    for (var i = 1; i < points.length - 1; i++) {
-                        var mx = (points[i].x + points[i + 1].x) / 2;
-                        var my = (points[i].y + points[i + 1].y) / 2;
-                        targetCtx.quadraticCurveTo(points[i].x, points[i].y, mx, my);
-                    }
-                    var last = points[points.length - 1];
-                    targetCtx.lineTo(last.x, last.y);
-                }
-            }
+            // Offscreen canvas for compositing
+            var offCanvas = document.createElement('canvas');
+            var offCtx = offCanvas.getContext('2d');
 
             function animate() {
                 if (!isAnimating) return;
-                frame++;
 
-                // Smooth cursor — liquid/floaty feel
+                // Smooth cursor
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.1;
-                smoothY += (targetY - smoothY) * 0.1;
+                smoothX += (targetX - smoothX) * 0.12;
+                smoothY += (targetY - smoothY) * 0.12;
 
-                var vx = smoothX - prevX;
-                var vy = smoothY - prevY;
-                var speed = Math.sqrt(vx * vx + vy * vy);
+                // Paint new brush segment onto persistent mask
+                if (isActive && smoothX > -500 && prevX > -500) {
+                    var dx = smoothX - prevX, dy = smoothY - prevY;
+                    var speed = Math.sqrt(dx * dx + dy * dy);
 
-                // Add trail positions — frequent for smooth strokes
-                if (isActive && speed > 0.5) {
-                    trail.push({ x: smoothX, y: smoothY, age: 0 });
-                    if (trail.length > maxTrail) trail.shift();
-                }
+                    if (speed > 0.3) {
+                        maskCtx.lineCap = 'round';
+                        maskCtx.lineJoin = 'round';
 
-                // Age trail — no gravity, just fade
-                for (var i = trail.length - 1; i >= 0; i--) {
-                    trail[i].age++;
-                    if (trail[i].age > trailLifetime) trail.splice(i, 1);
+                        // Tiny soft edge — just barely wider, low alpha
+                        maskCtx.lineWidth = blobRadius * 1.1;
+                        maskCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+                        maskCtx.beginPath();
+                        maskCtx.moveTo(prevX, prevY);
+                        maskCtx.lineTo(smoothX, smoothY);
+                        maskCtx.stroke();
+
+                        // Core brush stroke — solid, clean
+                        maskCtx.lineWidth = blobRadius * 0.95;
+                        maskCtx.strokeStyle = '#fff';
+                        maskCtx.beginPath();
+                        maskCtx.moveTo(prevX, prevY);
+                        maskCtx.lineTo(smoothX, smoothY);
+                        maskCtx.stroke();
+                    }
+
+                    // Cursor circle on mask — soft edge + solid core
+                    maskCtx.beginPath();
+                    maskCtx.arc(smoothX, smoothY, blobRadius * 1.06, 0, Math.PI * 2);
+                    maskCtx.fillStyle = 'rgba(255,255,255,0.18)';
+                    maskCtx.fill();
+
+                    maskCtx.beginPath();
+                    maskCtx.arc(smoothX, smoothY, blobRadius * 0.92, 0, Math.PI * 2);
+                    maskCtx.fillStyle = '#fff';
+                    maskCtx.fill();
                 }
 
                 prevX = smoothX;
                 prevY = smoothY;
 
+                // Draw scene
                 ctx.clearRect(0, 0, W, H);
                 if (imgsReady < 2) { requestAnimationFrame(animate); return; }
 
                 var r = getCoverRect(topImg);
 
-                // 1. Draw base (rival) image — revealed underneath
+                // Base (rival) image — revealed underneath
                 ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                // 2. Offscreen: top image with holes punched through
-                if (!animate._offCanvas) {
-                    animate._offCanvas = document.createElement('canvas');
-                    animate._offCtx = animate._offCanvas.getContext('2d');
-                }
-                var oc = animate._offCanvas, octx = animate._offCtx;
-                oc.width = W * dpr;
-                oc.height = H * dpr;
-                octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                // Top image with mask punched through
+                offCanvas.width = W * dpr;
+                offCanvas.height = H * dpr;
+                offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-                octx.globalCompositeOperation = 'source-over';
-                octx.drawImage(topImg, r.x, r.y, r.w, r.h);
+                offCtx.globalCompositeOperation = 'source-over';
+                offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                // Punch liquid holes
-                if (trail.length > 0 || isActive) {
-                    octx.globalCompositeOperation = 'destination-out';
+                offCtx.globalCompositeOperation = 'destination-out';
+                offCtx.drawImage(maskCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
 
-                    // TRAIL — multi-pass thick bezier stroke for soft feathered edges
-                    if (trail.length >= 2) {
-                        // Build path points including cursor
-                        var pathPts = [];
-                        for (var i = 0; i < trail.length; i++) pathPts.push(trail[i]);
-                        if (isActive && smoothX > -500) pathPts.push({ x: smoothX, y: smoothY, age: 0 });
-
-                        // Many soft passes = very smooth feathered edges like liquid
-                        var passes = [
-                            { widthMul: 2.2, alpha: 0.02 },
-                            { widthMul: 1.9, alpha: 0.04 },
-                            { widthMul: 1.65, alpha: 0.07 },
-                            { widthMul: 1.45, alpha: 0.12 },
-                            { widthMul: 1.25, alpha: 0.2 },
-                            { widthMul: 1.08, alpha: 0.35 },
-                            { widthMul: 0.9, alpha: 0.55 },
-                            { widthMul: 0.7, alpha: 0.8 },
-                            { widthMul: 0.5, alpha: 1.0 }
-                        ];
-
-                        octx.lineCap = 'round';
-                        octx.lineJoin = 'round';
-
-                        for (var p = 0; p < passes.length; p++) {
-                            octx.lineWidth = blobRadius * passes[p].widthMul;
-                            octx.strokeStyle = 'rgba(0,0,0,' + passes[p].alpha + ')';
-                            drawSmoothPath(octx, pathPts);
-                            octx.stroke();
-                        }
-                    }
-
-                    // CURSOR BLOB — organic wobbly shape, not a circle
-                    if (isActive && smoothX > -500) {
-                        // Many soft passes for ultra-smooth feathered edge
-                        var blobPasses = [
-                            { scale: 1.5, alpha: 0.02 },
-                            { scale: 1.38, alpha: 0.05 },
-                            { scale: 1.27, alpha: 0.1 },
-                            { scale: 1.18, alpha: 0.2 },
-                            { scale: 1.1, alpha: 0.4 },
-                            { scale: 1.03, alpha: 0.7 },
-                            { scale: 0.97, alpha: 1.0 }
-                        ];
-                        for (var p = 0; p < blobPasses.length; p++) {
-                            octx.globalAlpha = blobPasses[p].alpha;
-                            octx.fillStyle = '#000';
-                            drawOrganicBlob(octx, smoothX, smoothY, blobRadius * blobPasses[p].scale, vx, vy);
-                            octx.fill();
-                        }
-                        octx.globalAlpha = 1;
-                    }
-                }
-
-                // 3. Composite offscreen onto main canvas
-                ctx.drawImage(oc, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                // Composite onto main canvas
+                ctx.drawImage(offCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
 
                 requestAnimationFrame(animate);
             }
