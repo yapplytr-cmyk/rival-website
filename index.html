@@ -480,16 +480,30 @@
         }
         @keyframes hintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-        /* Exit animation */
-        .interactive-hero.exiting {
-            animation: heroExit 1.4s cubic-bezier(0.22,1,0.36,1) forwards;
+        /* Text fade out when button pressed */
+        .hero-center-content.fading, .touch-hint.fading {
+            opacity: 0 !important;
+            transition: opacity 0.5s ease;
             pointer-events: none;
         }
-        @keyframes heroExit {
-            0% { opacity: 1; transform: scale(1); filter: brightness(1); }
-            25% { transform: scale(1.08); filter: brightness(1.8); }
-            50% { filter: brightness(3); }
-            100% { opacity: 0; transform: scale(1.2); filter: brightness(4); }
+
+        /* Transition video overlay */
+        .hero-transition-video {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 100;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        .hero-transition-video.playing {
+            opacity: 1;
+        }
+
+        /* Exit — just fade to gone after video ends */
+        .interactive-hero.exiting {
+            pointer-events: none;
         }
         .interactive-hero.gone { display: none; }
 
@@ -554,15 +568,20 @@
         <div class="cursor-glow" id="cursor-glow"></div>
         <div class="reveal-edge-glow" id="reveal-edge-glow"></div>
 
+        <!-- Transition video — plays when Enter button is pressed -->
+        <video class="hero-transition-video" id="hero-transition-video" muted playsinline preload="auto">
+            <source src="assets/hero-transition.mp4" type="video/mp4">
+        </video>
+
         <!-- Center content -->
-        <div class="hero-center-content">
+        <div class="hero-center-content" id="hero-center-content">
             <div class="brand-text">R I V A L</div>
             <h2>Reveal Your<br><span style="color:var(--accent)">Rival Within</span></h2>
             <p class="intro-sub">Move your cursor to uncover the challenger</p>
             <button class="enter-arena-btn" id="enter-arena-btn">Enter the Arena</button>
         </div>
 
-        <div class="touch-hint">
+        <div class="touch-hint" id="touch-hint">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8"/><path d="M15 15h2a2 2 0 0 1 0 4h0a2 2 0 0 1-2-2v0"/><path d="M21 12a9 9 0 1 1-9-9"/></svg>
             Touch and drag to reveal
         </div>
@@ -1061,16 +1080,51 @@
             }
             animate();
 
-            // ENTER BUTTON
+            // ENTER BUTTON — fade text, play transition video, then reveal site
+            var transitionVideo = document.getElementById('hero-transition-video');
+            var heroCenterContent = document.getElementById('hero-center-content');
+            var touchHint = document.getElementById('touch-hint');
+
             enterBtn.addEventListener('click', function() {
-                isAnimating = false;
-                hero.classList.add('exiting');
+                // 1. Fade out all text/buttons immediately
+                heroCenterContent.classList.add('fading');
+                touchHint.classList.add('fading');
+
+                // 2. After text fades, show and play the transition video
                 setTimeout(function() {
-                    hero.classList.add('gone');
-                    mainSite.classList.add('revealed');
-                    document.body.style.overflow = '';
-                    window.scrollTo(0, 0);
-                }, 1400);
+                    isAnimating = false; // stop canvas rendering
+                    transitionVideo.classList.add('playing');
+                    transitionVideo.currentTime = 0;
+                    transitionVideo.play().catch(function() {});
+
+                    // 3. When video ends (screen is black), smoothly transition to main site
+                    transitionVideo.addEventListener('ended', function() {
+                        // Brief pause on black frame before revealing site
+                        setTimeout(function() {
+                            hero.classList.add('exiting');
+                            hero.style.opacity = '0';
+                            hero.style.transition = 'opacity 0.6s ease';
+                            mainSite.classList.add('revealed');
+                            document.body.style.overflow = '';
+                            window.scrollTo(0, 0);
+
+                            setTimeout(function() {
+                                hero.classList.add('gone');
+                            }, 700);
+                        }, 300);
+                    }, { once: true });
+
+                    // Fallback: if video fails or stalls, transition after 9s
+                    setTimeout(function() {
+                        if (!hero.classList.contains('gone')) {
+                            hero.style.opacity = '0';
+                            hero.style.transition = 'opacity 0.6s ease';
+                            mainSite.classList.add('revealed');
+                            document.body.style.overflow = '';
+                            setTimeout(function() { hero.classList.add('gone'); }, 700);
+                        }
+                    }, 9500);
+                }, 500);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
