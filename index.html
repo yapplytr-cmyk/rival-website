@@ -882,7 +882,7 @@
     </div><!-- end .main-site -->
 
     <script>
-        // ========== INTERACTIVE HERO — LIQUID BRUSH REVEAL (ECHO-STYLE) ==========
+        // ========== INTERACTIVE HERO — FLUID CURSOR REVEAL (Navier-Stokes style) ==========
         (function() {
             var hero = document.getElementById('interactive-hero');
             var canvas = document.getElementById('liquid-canvas');
@@ -909,13 +909,18 @@
             var prevX = -999, prevY = -999;
             var isActive = false;
 
-            // Trail history for smooth quadratic curves
-            var trail = [];
-            var MAX_TRAIL = 6;
+            // Fluid dissipation — mask fades over time like real fluid sim
+            // 0.96 = Lando Norris site value. Lower = faster fade-back.
+            var DISSIPATION = 0.985;
+            var MOUSE_FORCE = 1.0;
 
-            // Persistent mask canvas — accumulates reveal, never cleared
+            // Dissipating mask canvas — fades each frame
             var maskCanvas = document.createElement('canvas');
             var maskCtx = maskCanvas.getContext('2d');
+
+            // Temp canvas for dissipation trick
+            var fadeCanvas = document.createElement('canvas');
+            var fadeCtx = fadeCanvas.getContext('2d');
 
             // Blurred mask canvas — softened copy for compositing
             var blurCanvas = document.createElement('canvas');
@@ -934,10 +939,13 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                blobRadius = W <= 480 ? 65 : W <= 768 ? 100 : 160;
+                blobRadius = W <= 480 ? 60 : W <= 768 ? 95 : 150;
                 maskCanvas.width = W * dpr;
                 maskCanvas.height = H * dpr;
                 maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                fadeCanvas.width = W * dpr;
+                fadeCanvas.height = H * dpr;
+                fadeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 blurCanvas.width = W * dpr;
                 blurCanvas.height = H * dpr;
                 blurCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -970,7 +978,6 @@
                     targetX = e.touches[0].clientX; targetY = e.touches[0].clientY;
                     smoothX = targetX; smoothY = targetY;
                     prevX = targetX; prevY = targetY;
-                    trail = [{ x: targetX, y: targetY }];
                     isActive = true;
                 }
             }, { passive: true });
@@ -979,60 +986,75 @@
                 targetX = e.clientX; targetY = e.clientY;
                 smoothX = targetX; smoothY = targetY;
                 prevX = targetX; prevY = targetY;
-                trail = [{ x: targetX, y: targetY }];
                 isActive = true;
             });
 
-            // Interpolate sub-steps between two points for ultra-smooth painting
-            function paintSegment(x1, y1, x2, y2) {
+            // Stamp a radial gradient circle (mimics fluid external force)
+            function stampGradient(cx, cy, radius, alpha) {
+                var grad = maskCtx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                grad.addColorStop(0, 'rgba(255,255,255,' + alpha + ')');
+                grad.addColorStop(0.5, 'rgba(255,255,255,' + (alpha * 0.7) + ')');
+                grad.addColorStop(0.85, 'rgba(255,255,255,' + (alpha * 0.2) + ')');
+                grad.addColorStop(1, 'rgba(255,255,255,0)');
+                maskCtx.fillStyle = grad;
+                maskCtx.beginPath();
+                maskCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+                maskCtx.fill();
+            }
+
+            // Paint gradient stamps along a path for smooth coverage
+            function paintFluidSegment(x1, y1, x2, y2, force) {
                 var dx = x2 - x1, dy = y2 - y1;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                var steps = Math.max(1, Math.ceil(dist / (blobRadius * 0.3)));
+                var steps = Math.max(1, Math.ceil(dist / (blobRadius * 0.25)));
 
                 for (var i = 0; i <= steps; i++) {
                     var t = i / steps;
                     var x = x1 + dx * t;
                     var y = y1 + dy * t;
-                    maskCtx.beginPath();
-                    maskCtx.arc(x, y, blobRadius, 0, Math.PI * 2);
-                    maskCtx.fill();
+                    stampGradient(x, y, blobRadius * (1 + force * 0.3), MOUSE_FORCE);
                 }
             }
 
             function animate() {
                 if (!isAnimating) return;
 
-                // Smooth cursor interpolation — responsive but fluid
+                // Smooth cursor interpolation
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.18;
-                smoothY += (targetY - smoothY) * 0.18;
+                smoothX += (targetX - smoothX) * 0.15;
+                smoothY += (targetY - smoothY) * 0.15;
 
-                // Paint onto persistent mask
+                // === DISSIPATION — fade the mask each frame like fluid sim ===
+                // Copy current mask to fade canvas, clear mask, draw back with reduced alpha
+                fadeCtx.clearRect(0, 0, W, H);
+                fadeCtx.globalAlpha = DISSIPATION;
+                fadeCtx.drawImage(maskCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                fadeCtx.globalAlpha = 1;
+
+                maskCtx.clearRect(0, 0, W, H);
+                maskCtx.drawImage(fadeCanvas, 0, 0, W, H);
+
+                // === PAINT — stamp radial gradient at cursor ===
                 if (isActive && smoothX > -500 && prevX > -500) {
                     var dx = smoothX - prevX, dy = smoothY - prevY;
                     var speed = Math.sqrt(dx * dx + dy * dy);
 
-                    maskCtx.fillStyle = '#fff';
+                    // Speed-based force: faster = bigger/stronger reveal
+                    var force = Math.min(speed / 30, 1.5);
 
-                    if (speed > 0.2) {
-                        // Paint interpolated circles along the path for gapless coverage
-                        paintSegment(prevX, prevY, smoothX, smoothY);
-
-                        // Track trail for curve smoothness
-                        trail.push({ x: smoothX, y: smoothY });
-                        if (trail.length > MAX_TRAIL) trail.shift();
+                    if (speed > 0.3) {
+                        paintFluidSegment(prevX, prevY, smoothX, smoothY, force);
                     }
 
-                    // Always stamp at current position
-                    maskCtx.beginPath();
-                    maskCtx.arc(smoothX, smoothY, blobRadius, 0, Math.PI * 2);
-                    maskCtx.fill();
+                    // Always stamp at current cursor position
+                    var cursorRadius = blobRadius * (1 + force * 0.3);
+                    stampGradient(smoothX, smoothY, cursorRadius, MOUSE_FORCE);
                 }
 
                 prevX = smoothX;
                 prevY = smoothY;
 
-                // Draw scene
+                // === RENDER ===
                 ctx.clearRect(0, 0, W, H);
                 if (imgsReady < 2) { requestAnimationFrame(animate); return; }
 
@@ -1041,13 +1063,13 @@
                 // Base (rival) image — revealed underneath
                 ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                // Create softened mask — apply Gaussian blur for organic edges
+                // Create softened mask — apply blur for organic fluid edges
                 blurCtx.clearRect(0, 0, W, H);
-                blurCtx.filter = 'blur(' + Math.round(blobRadius * 0.15) + 'px)';
+                blurCtx.filter = 'blur(' + Math.round(blobRadius * 0.12) + 'px)';
                 blurCtx.drawImage(maskCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
                 blurCtx.filter = 'none';
 
-                // Top image with blurred mask punched through
+                // Top image with fluid mask punched through
                 offCtx.clearRect(0, 0, W, H);
                 offCtx.globalCompositeOperation = 'source-over';
                 offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
