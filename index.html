@@ -478,11 +478,24 @@
             pointer-events: none !important;
         }
 
-        /* Transition video overlay — hidden and non-interactive until playing */
-        /* Hero fading to black — pure CSS transition, no video */
+        /* Transition video — covers hero seamlessly, hidden until triggered */
+        .hero-transition-video {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            z-index: 15;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .hero-transition-video.playing {
+            opacity: 1;
+        }
         .interactive-hero.fading-out {
             opacity: 0;
-            transition: opacity 1.5s ease;
+            transition: opacity 0.8s ease;
         }
         .interactive-hero.gone { display: none; }
 
@@ -796,6 +809,11 @@
             <canvas class="liquid-mask-canvas" id="liquid-canvas"></canvas>
         </div>
 
+        <!-- Transition video — plays on "Enter the Arena", covers the hero seamlessly -->
+        <video class="hero-transition-video" id="hero-transition-video" muted playsinline preload="auto" poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+            <source src="assets/hero-transition.mp4" type="video/mp4">
+        </video>
+
         <!-- Cursor glow effect -->
         <div class="cursor-glow" id="cursor-glow"></div>
         <div class="reveal-edge-glow" id="reveal-edge-glow"></div>
@@ -1085,30 +1103,59 @@
             }
             animate();
 
-            // ENTER BUTTON — pure CSS fade to black, no video
+            // ENTER BUTTON — plays 4K transition video then reveals arena
             var heroBrandText = document.getElementById('hero-brand-text');
             var heroBtnWrap = document.getElementById('hero-btn-wrap');
             var touchHint = document.getElementById('touch-hint');
+            var transVideo = document.getElementById('hero-transition-video');
 
             enterBtn.addEventListener('click', function() {
-                // 1. Fade out text/buttons
+                // 1. Fade out text/buttons immediately
                 heroBrandText.classList.add('fading');
                 heroBtnWrap.classList.add('fading');
                 touchHint.classList.add('fading');
 
-                // 2. After text fades, fade entire hero to black
+                // 2. After text fades, show and play the transition video
                 setTimeout(function() {
-                    hero.classList.add('fading-out');
                     isAnimating = false;
+                    transVideo.currentTime = 0;
+                    transVideo.classList.add('playing');
+                    transVideo.play().catch(function() {
+                        // If video fails (autoplay blocked), fall back to CSS fade
+                        hero.classList.add('fading-out');
+                        setTimeout(function() {
+                            mainSite.classList.add('revealed');
+                            document.body.style.overflow = '';
+                            window.scrollTo(0, 0);
+                            hero.classList.add('gone');
+                        }, 1000);
+                    });
 
-                    // 3. Once hero is invisible, reveal arena
+                    // 3. When video ends, fade hero out and reveal arena
+                    transVideo.addEventListener('ended', function onEnd() {
+                        transVideo.removeEventListener('ended', onEnd);
+                        hero.classList.add('fading-out');
+                        setTimeout(function() {
+                            mainSite.classList.add('revealed');
+                            document.body.style.overflow = '';
+                            window.scrollTo(0, 0);
+                            hero.classList.add('gone');
+                        }, 900);
+                    });
+
+                    // Safety timeout — if video stalls, force transition after 10s
                     setTimeout(function() {
-                        mainSite.classList.add('revealed');
-                        document.body.style.overflow = '';
-                        window.scrollTo(0, 0);
-                        hero.classList.add('gone');
-                    }, 1600);
-                }, 500);
+                        if (!hero.classList.contains('gone')) {
+                            hero.classList.add('fading-out');
+                            setTimeout(function() {
+                                mainSite.classList.add('revealed');
+                                document.body.style.overflow = '';
+                                window.scrollTo(0, 0);
+                                hero.classList.add('gone');
+                            }, 900);
+                        }
+                    }, 10000);
+                }, 400);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
