@@ -327,6 +327,211 @@
         .stats-row.visible .stat-block:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
         .stats-row.visible .stat-block:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
 
+        /* ========== INTERACTIVE HERO INTRO (ECHO-STYLE) ========== */
+        .interactive-hero {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: var(--bg-primary);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        .interactive-hero::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 900px; height: 900px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.25;
+            animation: heroGlow 4s ease-in-out infinite alternate;
+        }
+        @keyframes heroGlow {
+            0% { opacity: 0.15; transform: translate(-50%, -50%) scale(0.9); }
+            100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .image-reveal {
+            position: relative;
+            width: min(75vw, 440px);
+            height: min(75vw, 440px);
+            border-radius: 40px;
+            overflow: visible;
+        }
+
+        .image-reveal .base-layer,
+        .image-reveal .overlay-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            border-radius: 40px;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        .image-reveal .base-layer {
+            z-index: 1;
+            filter: brightness(0.6) saturate(0.5);
+        }
+        .image-reveal .overlay-layer {
+            z-index: 2;
+            will-change: transform;
+            pointer-events: none;
+            filter: drop-shadow(0 0 60px var(--accent-glow)) drop-shadow(0 0 120px var(--accent-glow));
+        }
+
+        /* Glow ring behind images */
+        .image-reveal::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 110%; height: 110%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+            z-index: 0;
+            animation: ringPulse 3s ease-in-out infinite alternate;
+        }
+        @keyframes ringPulse {
+            0% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.95); }
+            100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        .hero-intro-content {
+            text-align: center;
+            z-index: 10;
+            margin-top: 40px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.5s forwards;
+        }
+        .hero-intro-content .brand-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .hero-intro-content h2 {
+            font-size: clamp(22px, 4.5vw, 36px);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+        .hero-intro-content .intro-sub {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .enter-arena-btn {
+            padding: 16px 52px;
+            border-radius: 16px;
+            background: var(--cta-gradient);
+            color: #fff;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 35px var(--accent-glow), 0 4px 15px rgba(0,0,0,0.3);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+        .enter-arena-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            animation: btnShimmer 2.5s ease-in-out infinite;
+        }
+        @keyframes btnShimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .enter-arena-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 16px 60px var(--accent-glow);
+        }
+
+        .touch-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-tertiary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            z-index: 10;
+            animation: fadeInUp 1s ease-out 1.2s both;
+        }
+        .touch-hint svg {
+            width: 20px; height: 20px;
+            stroke: var(--text-tertiary);
+            fill: none;
+            stroke-width: 1.5;
+            vertical-align: middle;
+            margin-right: 6px;
+            animation: hintBounce 2s ease-in-out infinite;
+        }
+        @keyframes hintBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* Exit animation */
+        .interactive-hero.exiting {
+            animation: heroExit 1.4s cubic-bezier(0.22,1,0.36,1) forwards;
+            pointer-events: none;
+        }
+        @keyframes heroExit {
+            0% { opacity: 1; transform: scale(1); filter: brightness(1); }
+            25% { transform: scale(1.08); filter: brightness(1.8); }
+            50% { filter: brightness(3); }
+            100% { opacity: 0; transform: scale(1.2); filter: brightness(4); }
+        }
+
+        .interactive-hero.gone { display: none; }
+
+        /* Main site hidden initially */
+        .main-site {
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s;
+            transform: translateY(30px);
+        }
+        .main-site.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Floating particles in interactive hero */
+        .hero-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.15;
+            pointer-events: none;
+            animation: particleDrift 10s ease-in-out infinite;
+        }
+        @keyframes particleDrift {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.1; }
+            25% { transform: translateY(-40px) translateX(20px); opacity: 0.2; }
+            50% { transform: translateY(-10px) translateX(-30px); opacity: 0.08; }
+            75% { transform: translateY(-50px) translateX(10px); opacity: 0.18; }
+        }
+
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .navbar { padding: 12px 16px; }
@@ -338,6 +543,11 @@
             .stats-row { gap: 32px; padding: 28px 20px; }
             .cta-card { padding: 40px 24px; }
             .float-avatar { display: none; }
+            .image-reveal { width: min(85vw, 320px); height: min(85vw, 320px); border-radius: 28px; }
+            .image-reveal .base-layer, .image-reveal .overlay-layer { border-radius: 28px; }
+            .hero-intro-content { margin-top: 28px; }
+            .enter-arena-btn { padding: 14px 40px; font-size: 13px; }
+            .touch-hint { bottom: 24px; }
             .phone-frame { width: 240px; height: 480px; }
             .steps::before { left: 20px; }
             .step-number { width: 40px; height: 40px; font-size: 14px; border-radius: 12px; }
@@ -349,6 +559,53 @@
     </style>
 </head>
 <body>
+
+    <!-- ========== INTERACTIVE HERO INTRO (ECHO-STYLE) ========== -->
+    <section class="interactive-hero" id="interactive-hero">
+        <!-- Floating particles -->
+        <div class="hero-particle" style="width:6px;height:6px;top:15%;left:20%;animation-delay:0s;animation-duration:12s;"></div>
+        <div class="hero-particle" style="width:4px;height:4px;top:30%;right:15%;animation-delay:-3s;animation-duration:9s;"></div>
+        <div class="hero-particle" style="width:8px;height:8px;top:60%;left:10%;animation-delay:-5s;animation-duration:14s;"></div>
+        <div class="hero-particle" style="width:5px;height:5px;top:75%;right:25%;animation-delay:-7s;animation-duration:11s;"></div>
+        <div class="hero-particle" style="width:3px;height:3px;top:20%;right:35%;animation-delay:-2s;animation-duration:10s;"></div>
+        <div class="hero-particle" style="width:7px;height:7px;bottom:30%;left:30%;animation-delay:-8s;animation-duration:13s;"></div>
+
+        <!-- Two-layer image reveal -->
+        <div class="image-reveal" id="image-reveal">
+            <!--
+                TO USE YOUR OWN IMAGES:
+                Replace the src below with your generated images:
+                  - hero-base.png = the "normal" version
+                  - hero-overlay.png = the "enhanced/stylized" version (follows mouse)
+                Then remove the fallback-base and fallback-overlay divs.
+            -->
+            <img class="base-layer" src="assets/hero-base.png" alt="Rival" id="base-img" style="display:none" onload="this.style.display='block';document.getElementById('fallback-base').style.display='none';">
+            <img class="overlay-layer" src="assets/hero-overlay.png" alt="Rival" id="overlay-img" style="display:none" onload="this.style.display='block';document.getElementById('fallback-overlay').style.display='none';">
+
+            <!-- FALLBACK: creative CSS-based visual using app icon (shown when no hero images exist) -->
+            <div id="fallback-base" class="base-layer" style="display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,var(--bg-secondary) 0%,var(--bg-primary) 100%);">
+                <img src="assets/app-icon.png" style="width:65%;height:65%;object-fit:contain;border-radius:24%;filter:brightness(0.5) saturate(0.3);opacity:0.8;" alt="">
+            </div>
+            <div id="fallback-overlay" class="overlay-layer" style="display:flex;align-items:center;justify-content:center;background:transparent;">
+                <img src="assets/app-icon.png" style="width:65%;height:65%;object-fit:contain;border-radius:24%;filter:drop-shadow(0 0 40px var(--accent-glow)) drop-shadow(0 0 80px var(--accent-glow)) brightness(1.1);" alt="">
+            </div>
+        </div>
+
+        <div class="hero-intro-content">
+            <div class="brand-text">R I V A L</div>
+            <h2>Move to Reveal.<br><span style="color:var(--accent)">Click to Enter.</span></h2>
+            <p class="intro-sub">Drag your finger or mouse across the image</p>
+            <button class="enter-arena-btn" id="enter-arena-btn">Enter the Arena</button>
+        </div>
+
+        <div class="touch-hint">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Move to explore
+        </div>
+    </section>
+
+    <!-- ========== MAIN SITE (revealed after Enter) ========== -->
+    <div class="main-site" id="main-site">
 
     <!-- Background orbs -->
     <div class="bg-orbs">
@@ -612,7 +869,118 @@
         <p>2026 Rival. All rights reserved.</p>
     </footer>
 
+    </div><!-- end .main-site -->
+
     <script>
+        // ========== INTERACTIVE HERO — ECHO-STYLE MOUSE/TOUCH TRACKING ==========
+        (function() {
+            var hero = document.getElementById('interactive-hero');
+            var reveal = document.getElementById('image-reveal');
+            // Use real overlay image if loaded, otherwise use fallback
+            var overlay = document.getElementById('overlay-img');
+            var fallbackOverlay = document.getElementById('fallback-overlay');
+            // The overlay target is whichever is visible
+            function getOverlay() {
+                return (overlay && overlay.style.display !== 'none') ? overlay : fallbackOverlay;
+            }
+            var enterBtn = document.getElementById('enter-arena-btn');
+            var mainSite = document.getElementById('main-site');
+
+            // Mouse tracking state
+            var mouseX = 0, mouseY = 0;
+            var currentX = 0, currentY = 0;
+            var maxDisplacement = 40; // px the overlay moves
+            var lerp = 0.08; // smoothing factor (lower = smoother/laggier)
+            var isAnimating = true;
+
+            // Get center of the reveal container
+            function getCenter() {
+                var rect = reveal.getBoundingClientRect();
+                return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            }
+
+            // Mouse move handler
+            function onMouseMove(e) {
+                var center = getCenter();
+                var dx = (e.clientX - center.x) / (window.innerWidth * 0.5);
+                var dy = (e.clientY - center.y) / (window.innerHeight * 0.5);
+                // Clamp to -1..1
+                dx = Math.max(-1, Math.min(1, dx));
+                dy = Math.max(-1, Math.min(1, dy));
+                mouseX = dx * maxDisplacement;
+                mouseY = dy * maxDisplacement;
+            }
+
+            // Touch move handler
+            function onTouchMove(e) {
+                if (e.touches.length > 0) {
+                    var touch = e.touches[0];
+                    var center = getCenter();
+                    var dx = (touch.clientX - center.x) / (window.innerWidth * 0.5);
+                    var dy = (touch.clientY - center.y) / (window.innerHeight * 0.5);
+                    dx = Math.max(-1, Math.min(1, dx));
+                    dy = Math.max(-1, Math.min(1, dy));
+                    mouseX = dx * maxDisplacement;
+                    mouseY = dy * maxDisplacement;
+                    e.preventDefault();
+                }
+            }
+
+            // Animation loop with lerp smoothing
+            function animate() {
+                if (!isAnimating) return;
+                currentX += (mouseX - currentX) * lerp;
+                currentY += (mouseY - currentY) * lerp;
+                var target = getOverlay();
+                if (target) target.style.transform = 'translate(' + currentX.toFixed(2) + 'px, ' + currentY.toFixed(2) + 'px)';
+                requestAnimationFrame(animate);
+            }
+
+            // Attach listeners
+            hero.addEventListener('mousemove', onMouseMove);
+            hero.addEventListener('touchmove', onTouchMove, { passive: false });
+
+            // Also handle touch start for immediate response
+            hero.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 0) {
+                    var touch = e.touches[0];
+                    var center = getCenter();
+                    var dx = (touch.clientX - center.x) / (window.innerWidth * 0.5);
+                    var dy = (touch.clientY - center.y) / (window.innerHeight * 0.5);
+                    dx = Math.max(-1, Math.min(1, dx));
+                    dy = Math.max(-1, Math.min(1, dy));
+                    mouseX = dx * maxDisplacement;
+                    mouseY = dy * maxDisplacement;
+                }
+            }, { passive: true });
+
+            // Reset when mouse leaves
+            hero.addEventListener('mouseleave', function() {
+                mouseX = 0;
+                mouseY = 0;
+            });
+
+            // Start animation loop
+            animate();
+
+            // ENTER BUTTON — transition to main site
+            enterBtn.addEventListener('click', function() {
+                isAnimating = false;
+                hero.classList.add('exiting');
+
+                // After exit animation, show main site
+                setTimeout(function() {
+                    hero.classList.add('gone');
+                    mainSite.classList.add('revealed');
+                    document.body.style.overflow = '';
+                    window.scrollTo(0, 0);
+                }, 1400);
+            });
+
+            // Prevent scrolling while interactive hero is visible
+            document.body.style.overflow = 'hidden';
+        })();
+
         // Theme Switching
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
