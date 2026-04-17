@@ -1024,25 +1024,27 @@
                 isActive = true;
             });
 
-            // Noise seed for organic waveform edges
+            // Movement-driven liquid noise
             var noiseTime = 0;
+            var noiseSpeed = 0;       // current noise evolution speed — driven by movement
+            var noiseIntensity = 0;   // how much the edges distort — driven by movement
+
             function noise1D(x) {
-                // Simple smooth noise using layered sines
-                return Math.sin(x * 1.2) * 0.5
-                     + Math.sin(x * 2.7 + 1.3) * 0.25
-                     + Math.sin(x * 4.1 + 2.7) * 0.15
-                     + Math.sin(x * 7.3 + 0.8) * 0.1;
+                // Smooth organic noise — fewer harmonics = rounder shapes
+                return Math.sin(x * 1.0) * 0.6
+                     + Math.sin(x * 2.3 + 1.3) * 0.3
+                     + Math.sin(x * 3.8 + 2.7) * 0.1;
             }
 
-            // Draw organic wobbly blob — solid white, no feathering
+            // Draw organic liquid blob — fewer points = smoother, rounder form
             function stampBlob(cx, cy, radius) {
-                var points = 40;
+                var points = 16; // fewer edges — smooth organic shape
                 maskCtx.fillStyle = '#fff';
                 maskCtx.beginPath();
                 for (var i = 0; i <= points; i++) {
                     var angle = (i / points) * Math.PI * 2;
-                    // Waveform: distort radius using noise based on angle + time
-                    var n = noise1D(angle * 3 + noiseTime) * 0.3;
+                    // Distortion scales with noiseIntensity — still when idle, alive when moving
+                    var n = noise1D(angle * 2 + noiseTime) * noiseIntensity;
                     var r = radius * (1 + n);
                     var px = cx + Math.cos(angle) * r;
                     var py = cy + Math.sin(angle) * r;
@@ -1070,13 +1072,25 @@
             function animate() {
                 if (!isAnimating) return;
 
-                // Advance noise time for living, moving waveform edges
-                noiseTime += 0.06;
-
                 // Smooth cursor — lower factor = more fluid/trailing motion
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
                 smoothX += (targetX - smoothX) * 0.10;
                 smoothY += (targetY - smoothY) * 0.10;
+
+                // Movement speed drives the blob animation
+                var mx = smoothX - prevX, my = smoothY - prevY;
+                var cursorSpeed = Math.sqrt(mx * mx + my * my);
+
+                // Target noise speed & intensity based on movement
+                var targetNoiseSpeed = Math.min(cursorSpeed * 0.003, 0.04);
+                var targetNoiseIntensity = Math.min(cursorSpeed * 0.008, 0.25);
+
+                // Smoothly ramp up when moving, slowly decay when still
+                noiseSpeed += (targetNoiseSpeed - noiseSpeed) * 0.08;
+                noiseIntensity += (targetNoiseIntensity - noiseIntensity) * 0.06;
+
+                // Advance noise time — speed driven by movement, not constant
+                noiseTime += noiseSpeed;
 
                 // === DISSIPATION — fade mask so revealed areas return FULLY ===
                 fadeCtx.clearRect(0, 0, W, H);
