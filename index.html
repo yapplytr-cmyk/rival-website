@@ -327,7 +327,7 @@
         .stats-row.visible .stat-block:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
         .stats-row.visible .stat-block:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
 
-        /* ========== INTERACTIVE HERO INTRO (ECHO-STYLE) ========== */
+        /* ========== INTERACTIVE HERO — LIQUID MASK REVEAL ========== */
         .interactive-hero {
             position: fixed;
             top: 0; left: 0;
@@ -336,99 +336,116 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            background: var(--bg-primary);
+            background: #000;
             overflow: hidden;
-            cursor: crosshair;
-        }
-        .interactive-hero::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 900px; height: 900px;
-            transform: translate(-50%, -50%);
-            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-            pointer-events: none;
-            opacity: 0.25;
-            animation: heroGlow 4s ease-in-out infinite alternate;
-        }
-        @keyframes heroGlow {
-            0% { opacity: 0.15; transform: translate(-50%, -50%) scale(0.9); }
-            100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1.1); }
+            cursor: none;
         }
 
-        .image-reveal {
-            position: relative;
-            width: min(75vw, 440px);
-            height: min(75vw, 440px);
-            border-radius: 40px;
-            overflow: visible;
-        }
-
-        .image-reveal .base-layer,
-        .image-reveal .overlay-layer {
+        /* Image container — fills viewport */
+        .reveal-container {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            object-fit: contain;
-            border-radius: 40px;
+        }
+
+        /* Both layers fill the container */
+        .reveal-container img {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto; height: 100%;
+            max-width: none;
+            object-fit: cover;
             user-select: none;
             -webkit-user-drag: none;
         }
-        .image-reveal .base-layer {
+
+        /* Base = rival version (white outfit, red eyes) — always visible underneath */
+        .reveal-base {
             z-index: 1;
-            filter: brightness(0.6) saturate(0.5);
         }
-        .image-reveal .overlay-layer {
+
+        /* Top = normal version (black hoodie) — gets masked to reveal base */
+        .reveal-top {
             z-index: 2;
-            will-change: transform;
-            pointer-events: none;
-            filter: drop-shadow(0 0 60px var(--accent-glow)) drop-shadow(0 0 120px var(--accent-glow));
+            /* mask is set dynamically by JS — starts fully visible */
+            -webkit-mask-image: radial-gradient(circle 0px at 50% 50%, transparent 0%, transparent 100%);
+            mask-image: radial-gradient(circle 0px at 50% 50%, transparent 0%, transparent 100%);
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            will-change: mask-image, -webkit-mask-image;
         }
 
-        /* Glow ring behind images */
-        .image-reveal::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 110%; height: 110%;
-            transform: translate(-50%, -50%);
+        /* Custom cursor glow that follows mouse */
+        .cursor-glow {
+            position: fixed;
+            width: 40px; height: 40px;
             border-radius: 50%;
-            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
-            z-index: 0;
-            animation: ringPulse 3s ease-in-out infinite alternate;
-        }
-        @keyframes ringPulse {
-            0% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.95); }
-            100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
-        }
-
-        .hero-intro-content {
-            text-align: center;
-            z-index: 10;
-            margin-top: 40px;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 100;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: overlay;
             opacity: 0;
-            animation: fadeInUp 1s ease-out 0.5s forwards;
+            transition: opacity 0.3s ease;
         }
-        .hero-intro-content .brand-text {
-            font-size: 14px;
+        .interactive-hero:hover .cursor-glow,
+        .interactive-hero:active .cursor-glow { opacity: 1; }
+
+        /* Subtle edge glow on the reveal border */
+        .reveal-edge-glow {
+            position: fixed;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 3;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            filter: blur(20px);
+        }
+        .interactive-hero:hover .reveal-edge-glow { opacity: 0.4; }
+
+        /* Center content overlay */
+        .hero-center-content {
+            position: relative;
+            z-index: 50;
+            text-align: center;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hero-center-content .brand-text {
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: 8px;
-            color: var(--accent);
+            letter-spacing: 10px;
+            color: #fff;
             text-transform: uppercase;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+            text-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
-        .hero-intro-content h2 {
-            font-size: clamp(22px, 4.5vw, 36px);
+        .hero-center-content h2 {
+            font-size: clamp(24px, 5vw, 42px);
             font-weight: 800;
             letter-spacing: -0.5px;
-            line-height: 1.2;
-            margin-bottom: 8px;
+            line-height: 1.15;
+            margin-bottom: 12px;
+            color: #fff;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.5s forwards;
+            text-shadow: 0 2px 40px rgba(0,0,0,0.9);
         }
-        .hero-intro-content .intro-sub {
+        .hero-center-content .intro-sub {
             font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 32px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 36px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.7s forwards;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.9);
         }
 
         .enter-arena-btn {
@@ -441,12 +458,15 @@
             font-size: 15px;
             border: none;
             cursor: pointer;
+            pointer-events: auto;
             transition: all 0.3s ease;
-            box-shadow: 0 0 35px var(--accent-glow), 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
             letter-spacing: 1.5px;
             text-transform: uppercase;
             position: relative;
             overflow: hidden;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.9s forwards;
         }
         .enter-arena-btn::before {
             content: '';
@@ -456,40 +476,37 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
             animation: btnShimmer 2.5s ease-in-out infinite;
         }
-        @keyframes btnShimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
+        @keyframes btnShimmer { 0% { left: -100%; } 100% { left: 100%; } }
         .enter-arena-btn:hover {
             transform: translateY(-3px) scale(1.05);
             box-shadow: 0 16px 60px var(--accent-glow);
+            cursor: pointer;
         }
 
+        /* Touch hint at bottom */
         .touch-hint {
             position: absolute;
             bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 12px;
-            color: var(--text-tertiary);
+            color: rgba(255,255,255,0.35);
             letter-spacing: 2px;
             text-transform: uppercase;
-            z-index: 10;
-            animation: fadeInUp 1s ease-out 1.2s both;
+            z-index: 50;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.2s forwards;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
         .touch-hint svg {
-            width: 20px; height: 20px;
-            stroke: var(--text-tertiary);
-            fill: none;
-            stroke-width: 1.5;
+            width: 18px; height: 18px;
+            stroke: rgba(255,255,255,0.35);
+            fill: none; stroke-width: 1.5;
             vertical-align: middle;
             margin-right: 6px;
             animation: hintBounce 2s ease-in-out infinite;
         }
-        @keyframes hintBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
-        }
+        @keyframes hintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
         /* Exit animation */
         .interactive-hero.exiting {
@@ -502,7 +519,6 @@
             50% { filter: brightness(3); }
             100% { opacity: 0; transform: scale(1.2); filter: brightness(4); }
         }
-
         .interactive-hero.gone { display: none; }
 
         /* Main site hidden initially */
@@ -511,26 +527,7 @@
             transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s;
             transform: translateY(30px);
         }
-        .main-site.revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Floating particles in interactive hero */
-        .hero-particle {
-            position: absolute;
-            border-radius: 50%;
-            background: var(--accent);
-            opacity: 0.15;
-            pointer-events: none;
-            animation: particleDrift 10s ease-in-out infinite;
-        }
-        @keyframes particleDrift {
-            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.1; }
-            25% { transform: translateY(-40px) translateX(20px); opacity: 0.2; }
-            50% { transform: translateY(-10px) translateX(-30px); opacity: 0.08; }
-            75% { transform: translateY(-50px) translateX(10px); opacity: 0.18; }
-        }
+        .main-site.revealed { opacity: 1; transform: translateY(0); }
 
         /* RESPONSIVE */
         @media (max-width: 768px) {
@@ -543,11 +540,10 @@
             .stats-row { gap: 32px; padding: 28px 20px; }
             .cta-card { padding: 40px 24px; }
             .float-avatar { display: none; }
-            .image-reveal { width: min(85vw, 320px); height: min(85vw, 320px); border-radius: 28px; }
-            .image-reveal .base-layer, .image-reveal .overlay-layer { border-radius: 28px; }
-            .hero-intro-content { margin-top: 28px; }
             .enter-arena-btn { padding: 14px 40px; font-size: 13px; }
             .touch-hint { bottom: 24px; }
+            .cursor-glow { display: none; }
+            .reveal-edge-glow { display: none; }
             .phone-frame { width: 240px; height: 480px; }
             .steps::before { left: 20px; }
             .step-number { width: 40px; height: 40px; font-size: 14px; border-radius: 12px; }
@@ -560,47 +556,31 @@
 </head>
 <body>
 
-    <!-- ========== INTERACTIVE HERO INTRO (ECHO-STYLE) ========== -->
+    <!-- ========== INTERACTIVE HERO — LIQUID MASK REVEAL ========== -->
     <section class="interactive-hero" id="interactive-hero">
-        <!-- Floating particles -->
-        <div class="hero-particle" style="width:6px;height:6px;top:15%;left:20%;animation-delay:0s;animation-duration:12s;"></div>
-        <div class="hero-particle" style="width:4px;height:4px;top:30%;right:15%;animation-delay:-3s;animation-duration:9s;"></div>
-        <div class="hero-particle" style="width:8px;height:8px;top:60%;left:10%;animation-delay:-5s;animation-duration:14s;"></div>
-        <div class="hero-particle" style="width:5px;height:5px;top:75%;right:25%;animation-delay:-7s;animation-duration:11s;"></div>
-        <div class="hero-particle" style="width:3px;height:3px;top:20%;right:35%;animation-delay:-2s;animation-duration:10s;"></div>
-        <div class="hero-particle" style="width:7px;height:7px;bottom:30%;left:30%;animation-delay:-8s;animation-duration:13s;"></div>
-
-        <!-- Two-layer image reveal -->
-        <div class="image-reveal" id="image-reveal">
-            <!--
-                TO USE YOUR OWN IMAGES:
-                Replace the src below with your generated images:
-                  - hero-base.png = the "normal" version
-                  - hero-overlay.png = the "enhanced/stylized" version (follows mouse)
-                Then remove the fallback-base and fallback-overlay divs.
-            -->
-            <img class="base-layer" src="assets/hero-base.png" alt="Rival" id="base-img" style="display:none" onload="this.style.display='block';document.getElementById('fallback-base').style.display='none';">
-            <img class="overlay-layer" src="assets/hero-overlay.png" alt="Rival" id="overlay-img" style="display:none" onload="this.style.display='block';document.getElementById('fallback-overlay').style.display='none';">
-
-            <!-- FALLBACK: creative CSS-based visual using app icon (shown when no hero images exist) -->
-            <div id="fallback-base" class="base-layer" style="display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,var(--bg-secondary) 0%,var(--bg-primary) 100%);">
-                <img src="assets/app-icon.png" style="width:65%;height:65%;object-fit:contain;border-radius:24%;filter:brightness(0.5) saturate(0.3);opacity:0.8;" alt="">
-            </div>
-            <div id="fallback-overlay" class="overlay-layer" style="display:flex;align-items:center;justify-content:center;background:transparent;">
-                <img src="assets/app-icon.png" style="width:65%;height:65%;object-fit:contain;border-radius:24%;filter:drop-shadow(0 0 40px var(--accent-glow)) drop-shadow(0 0 80px var(--accent-glow)) brightness(1.1);" alt="">
-            </div>
+        <!-- Two-layer reveal: base (rival) underneath, top (normal) gets masked -->
+        <div class="reveal-container" id="reveal-container">
+            <!-- Rival version — always visible underneath -->
+            <img class="reveal-base" src="assets/hero-overlay.jpg" alt="Rival Mode" draggable="false">
+            <!-- Normal version — masked by cursor to reveal rival underneath -->
+            <img class="reveal-top" id="reveal-top" src="assets/hero-base.jpg" alt="Normal" draggable="false">
         </div>
 
-        <div class="hero-intro-content">
+        <!-- Cursor glow effect -->
+        <div class="cursor-glow" id="cursor-glow"></div>
+        <div class="reveal-edge-glow" id="reveal-edge-glow"></div>
+
+        <!-- Center content -->
+        <div class="hero-center-content">
             <div class="brand-text">R I V A L</div>
-            <h2>Move to Reveal.<br><span style="color:var(--accent)">Click to Enter.</span></h2>
-            <p class="intro-sub">Drag your finger or mouse across the image</p>
+            <h2>Reveal Your<br><span style="color:var(--accent)">Rival Within</span></h2>
+            <p class="intro-sub">Move your cursor to uncover the challenger</p>
             <button class="enter-arena-btn" id="enter-arena-btn">Enter the Arena</button>
         </div>
 
         <div class="touch-hint">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            Move to explore
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8"/><path d="M15 15h2a2 2 0 0 1 0 4h0a2 2 0 0 1-2-2v0"/><path d="M21 12a9 9 0 1 1-9-9"/></svg>
+            Touch and drag to reveal
         </div>
     </section>
 
@@ -872,95 +852,94 @@
     </div><!-- end .main-site -->
 
     <script>
-        // ========== INTERACTIVE HERO — ECHO-STYLE MOUSE/TOUCH TRACKING ==========
+        // ========== INTERACTIVE HERO — LIQUID MASK REVEAL ==========
         (function() {
             var hero = document.getElementById('interactive-hero');
-            var reveal = document.getElementById('image-reveal');
-            // Use real overlay image if loaded, otherwise use fallback
-            var overlay = document.getElementById('overlay-img');
-            var fallbackOverlay = document.getElementById('fallback-overlay');
-            // The overlay target is whichever is visible
-            function getOverlay() {
-                return (overlay && overlay.style.display !== 'none') ? overlay : fallbackOverlay;
-            }
+            var revealTop = document.getElementById('reveal-top');
+            var cursorGlow = document.getElementById('cursor-glow');
+            var edgeGlow = document.getElementById('reveal-edge-glow');
             var enterBtn = document.getElementById('enter-arena-btn');
             var mainSite = document.getElementById('main-site');
 
-            // Mouse tracking state
-            var mouseX = 0, mouseY = 0;
-            var currentX = 0, currentY = 0;
-            var maxDisplacement = 40; // px the overlay moves
-            var lerp = 0.08; // smoothing factor (lower = smoother/laggier)
+            // Smooth cursor state
+            var targetX = 50, targetY = 50; // % position
+            var currentMaskX = 50, currentMaskY = 50;
+            var cursorPixelX = window.innerWidth / 2;
+            var cursorPixelY = window.innerHeight / 2;
             var isAnimating = true;
+            var isTouch = false;
+            var maskRadius = 150; // px radius of the reveal circle
 
-            // Get center of the reveal container
-            function getCenter() {
-                var rect = reveal.getBoundingClientRect();
-                return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-            }
+            // Mouse move — update target position
+            hero.addEventListener('mousemove', function(e) {
+                targetX = (e.clientX / window.innerWidth) * 100;
+                targetY = (e.clientY / window.innerHeight) * 100;
+                cursorPixelX = e.clientX;
+                cursorPixelY = e.clientY;
+            });
 
-            // Mouse move handler
-            function onMouseMove(e) {
-                var center = getCenter();
-                var dx = (e.clientX - center.x) / (window.innerWidth * 0.5);
-                var dy = (e.clientY - center.y) / (window.innerHeight * 0.5);
-                // Clamp to -1..1
-                dx = Math.max(-1, Math.min(1, dx));
-                dy = Math.max(-1, Math.min(1, dy));
-                mouseX = dx * maxDisplacement;
-                mouseY = dy * maxDisplacement;
-            }
-
-            // Touch move handler
-            function onTouchMove(e) {
+            // Touch move — same thing
+            hero.addEventListener('touchmove', function(e) {
                 if (e.touches.length > 0) {
-                    var touch = e.touches[0];
-                    var center = getCenter();
-                    var dx = (touch.clientX - center.x) / (window.innerWidth * 0.5);
-                    var dy = (touch.clientY - center.y) / (window.innerHeight * 0.5);
-                    dx = Math.max(-1, Math.min(1, dx));
-                    dy = Math.max(-1, Math.min(1, dy));
-                    mouseX = dx * maxDisplacement;
-                    mouseY = dy * maxDisplacement;
+                    var t = e.touches[0];
+                    targetX = (t.clientX / window.innerWidth) * 100;
+                    targetY = (t.clientY / window.innerHeight) * 100;
+                    cursorPixelX = t.clientX;
+                    cursorPixelY = t.clientY;
+                    isTouch = true;
                     e.preventDefault();
                 }
-            }
+            }, { passive: false });
 
-            // Animation loop with lerp smoothing
-            function animate() {
-                if (!isAnimating) return;
-                currentX += (mouseX - currentX) * lerp;
-                currentY += (mouseY - currentY) * lerp;
-                var target = getOverlay();
-                if (target) target.style.transform = 'translate(' + currentX.toFixed(2) + 'px, ' + currentY.toFixed(2) + 'px)';
-                requestAnimationFrame(animate);
-            }
-
-            // Attach listeners
-            hero.addEventListener('mousemove', onMouseMove);
-            hero.addEventListener('touchmove', onTouchMove, { passive: false });
-
-            // Also handle touch start for immediate response
             hero.addEventListener('touchstart', function(e) {
                 if (e.touches.length > 0) {
-                    var touch = e.touches[0];
-                    var center = getCenter();
-                    var dx = (touch.clientX - center.x) / (window.innerWidth * 0.5);
-                    var dy = (touch.clientY - center.y) / (window.innerHeight * 0.5);
-                    dx = Math.max(-1, Math.min(1, dx));
-                    dy = Math.max(-1, Math.min(1, dy));
-                    mouseX = dx * maxDisplacement;
-                    mouseY = dy * maxDisplacement;
+                    var t = e.touches[0];
+                    targetX = (t.clientX / window.innerWidth) * 100;
+                    targetY = (t.clientY / window.innerHeight) * 100;
+                    cursorPixelX = t.clientX;
+                    cursorPixelY = t.clientY;
+                    isTouch = true;
                 }
             }, { passive: true });
 
-            // Reset when mouse leaves
+            // Reset mask when mouse leaves (desktop only)
             hero.addEventListener('mouseleave', function() {
-                mouseX = 0;
-                mouseY = 0;
+                if (!isTouch) {
+                    targetX = -200; // move off screen to hide reveal
+                    targetY = -200;
+                }
             });
 
-            // Start animation loop
+            hero.addEventListener('mouseenter', function(e) {
+                targetX = (e.clientX / window.innerWidth) * 100;
+                targetY = (e.clientY / window.innerHeight) * 100;
+            });
+
+            // Animation loop — smooth lerp + mask update
+            function animate() {
+                if (!isAnimating) return;
+
+                // Lerp toward target
+                currentMaskX += (targetX - currentMaskX) * 0.1;
+                currentMaskY += (targetY - currentMaskY) * 0.1;
+
+                // Update CSS mask — transparent circle at cursor reveals base underneath
+                var mask = 'radial-gradient(circle ' + maskRadius + 'px at ' +
+                    currentMaskX.toFixed(2) + '% ' + currentMaskY.toFixed(2) + '%, ' +
+                    'transparent 0%, transparent 60%, rgba(0,0,0,0.4) 75%, black 100%)';
+                revealTop.style.webkitMaskImage = mask;
+                revealTop.style.maskImage = mask;
+
+                // Move cursor glow & edge glow
+                var lerpPixelX = cursorPixelX;
+                var lerpPixelY = cursorPixelY;
+                cursorGlow.style.left = lerpPixelX + 'px';
+                cursorGlow.style.top = lerpPixelY + 'px';
+                edgeGlow.style.left = lerpPixelX + 'px';
+                edgeGlow.style.top = lerpPixelY + 'px';
+
+                requestAnimationFrame(animate);
+            }
             animate();
 
             // ENTER BUTTON — transition to main site
@@ -968,7 +947,6 @@
                 isAnimating = false;
                 hero.classList.add('exiting');
 
-                // After exit animation, show main site
                 setTimeout(function() {
                     hero.classList.add('gone');
                     mainSite.classList.add('revealed');
@@ -977,7 +955,11 @@
                 }, 1400);
             });
 
-            // Prevent scrolling while interactive hero is visible
+            // Restore cursor on button hover
+            enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
+            enterBtn.addEventListener('mouseleave', function() { hero.style.cursor = 'none'; });
+
+            // Prevent scrolling while hero is visible
             document.body.style.overflow = 'hidden';
         })();
 
