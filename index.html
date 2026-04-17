@@ -736,8 +736,8 @@
             min-height: 160px;
         }
         .avatar-card {
-            width: 130px; height: 130px;
-            border-radius: 32px;
+            width: 150px; height: 150px;
+            border-radius: 36px;
             background: rgba(255,149,0,0.04);
             border: 1px solid rgba(255,149,0,0.12);
             display: flex;
@@ -774,8 +774,7 @@
         }
         .explain-content.visible .avatar-card::after { opacity: 1; }
         .avatar-card:nth-child(1)::after { animation-delay: 0s; }
-        .avatar-card:nth-child(2)::after { animation-delay: 1s; }
-        .avatar-card:nth-child(4)::after { animation-delay: 2s; }
+        .avatar-card:nth-child(3)::after { animation-delay: 1.5s; }
         @keyframes ringPulse {
             0%, 100% { transform: scale(1); opacity: 0.5; border-color: rgba(255,149,0,0.08); }
             50% { transform: scale(1.08); opacity: 1; border-color: rgba(255,149,0,0.2); }
@@ -794,19 +793,14 @@
         }
         /* Floating animation per avatar */
         @keyframes floatA { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.02); } }
-        @keyframes floatB { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.01); } }
         @keyframes floatC { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-14px) scale(1.03); } }
         .explain-content.visible .avatar-card:nth-child(1) {
             opacity: 1; transform: translateY(0) scale(1); transition-delay: 0s;
             animation: floatA 4s ease-in-out 1s infinite;
         }
-        .explain-content.visible .avatar-card:nth-child(2) {
-            opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.15s;
-            animation: floatB 5s ease-in-out 1.3s infinite;
-        }
-        .explain-content.visible .avatar-card:nth-child(4) {
-            opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.3s;
-            animation: floatC 4.5s ease-in-out 1.6s infinite;
+        .explain-content.visible .avatar-card:nth-child(3) {
+            opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.2s;
+            animation: floatC 4.5s ease-in-out 1.4s infinite;
         }
 
         /* VS badge — glowing center piece */
@@ -814,11 +808,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 60px; height: 60px;
+            width: 68px; height: 68px;
             border-radius: 50%;
             background: linear-gradient(135deg, #E67E00, #FF9500, #FFB340);
             font-family: var(--font);
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 900;
             color: #000;
             letter-spacing: 2px;
@@ -1096,39 +1090,38 @@
             <canvas class="explain-particles" id="explain-particles"></canvas>
             <div class="explain-content">
 
-                <!-- Avatar showcase — 3 avatars + VS badge -->
+                <!-- Avatar showcase — 2 mythic avatars + VS badge -->
                 <div class="avatar-showcase">
                     <div class="avatar-card"><img src="assets/cat-devil.png" alt="Devil"></div>
-                    <div class="avatar-card"><img src="assets/cat-cyber.png" alt="Cyber"></div>
                     <div class="vs-badge">VS</div>
-                    <div class="avatar-card"><img src="assets/cat-ninja.png" alt="Ninja"></div>
+                    <div class="avatar-card"><img src="assets/cat-king.png" alt="King"></div>
                 </div>
 
-                <div class="explain-label">Welcome to Rival</div>
-                <h2 class="explain-title">Choose your <span class="orange">avatar</span>.<br>Challenge your <span class="orange">rival</span>.</h2>
-                <p class="explain-text">Pick a character, find an opponent, and race head-to-head in real-time. Track GPS, heart rate, and pace live. Climb the ranks from Underdog to Legend.</p>
+                <div class="explain-label">This is Rival</div>
+                <h2 class="explain-title">That rush when you <span class="orange">pull ahead</span>.<br>That fire when you <span class="orange">won't quit</span>.</h2>
+                <p class="explain-text">Every race is personal. Your heart's pounding, your rival's gaining — and the only thing between you and the top is how badly you want it. This isn't a fitness app. It's war.</p>
 
                 <!-- Rank tier badges -->
                 <div class="rank-row">
                     <div class="rank-item">
-                        <img src="assets/ranks/1.png" alt="Rank 1">
-                        <div class="rank-name">Underdog</div>
+                        <img src="assets/ranks/1.png" alt="Glitch">
+                        <div class="rank-name">Glitch</div>
                     </div>
                     <div class="rank-item">
-                        <img src="assets/ranks/7.png" alt="Rank 7">
-                        <div class="rank-name">Contender</div>
+                        <img src="assets/ranks/7.png" alt="Street">
+                        <div class="rank-name">Street</div>
                     </div>
                     <div class="rank-item">
-                        <img src="assets/ranks/14.png" alt="Rank 14">
-                        <div class="rank-name">Warrior</div>
+                        <img src="assets/ranks/14.png" alt="Cosmic">
+                        <div class="rank-name">Cosmic</div>
                     </div>
                     <div class="rank-item">
-                        <img src="assets/ranks/20.png" alt="Rank 20">
-                        <div class="rank-name">Champion</div>
+                        <img src="assets/ranks/20.png" alt="Dragon">
+                        <div class="rank-name">Dragon</div>
                     </div>
                     <div class="rank-item">
-                        <img src="assets/ranks/27.png" alt="Rank 27">
-                        <div class="rank-name">Legend</div>
+                        <img src="assets/ranks/27.png" alt="Diamond">
+                        <div class="rank-name">Diamond</div>
                     </div>
                 </div>
 
