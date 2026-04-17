@@ -1283,23 +1283,51 @@
             gap: 12px;
             padding: 20px 56px;
             border-radius: 50px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
             font-family: var(--font);
             font-size: 18px;
             font-weight: 600;
             letter-spacing: 0.5px;
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .final-download-btn::before {
+            content: '';
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 100%; height: 0%;
+            background: linear-gradient(135deg, rgba(139,92,246,0.4), rgba(100,140,255,0.35));
+            transition: height 0.3s ease;
+            z-index: 0;
+            border-radius: 50px;
+        }
+        .final-download-btn > * { position: relative; z-index: 1; }
+        .final-download-btn svg { position: relative; z-index: 1; }
+        .final-download-btn.charged {
+            color: #fff;
+            border-color: rgba(139,92,246,0.5);
+            box-shadow: 0 0 30px rgba(139,92,246,0.2), 0 0 60px rgba(100,140,255,0.1);
+        }
+        .final-download-btn.charged::before {
+            height: 100%;
+        }
+        .final-download-btn.exploding {
+            animation: btnExplodePulse 0.5s ease-out;
+        }
+        @keyframes btnExplodePulse {
+            0% { transform: scale(1); box-shadow: 0 0 30px rgba(139,92,246,0.4); }
+            30% { transform: scale(1.15); box-shadow: 0 0 80px rgba(139,92,246,0.6), 0 0 120px rgba(100,140,255,0.3); }
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(139,92,246,0.1); }
         }
         .final-download-btn:hover {
-            background: rgba(255,255,255,0.18);
             border-color: rgba(255,255,255,0.25);
             transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(100,140,255,0.15);
         }
         .final-download-sub {
             font-family: var(--font);
@@ -2205,19 +2233,19 @@
     </script>
     <script>
         // ========== FEATURE PAGES PARTICLE SYSTEM ==========
-        // Particles flow across feature pages, drift toward phones, converge into download button on Ghost page
+        // Scattered → drift toward phones → rush into download button → explode on click
         (function() {
             var canvas = document.getElementById('feature-particles');
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
             var W, H;
             var particles = [];
-            var PARTICLE_COUNT = 100;
-            var scrollProgress = 0; // 0 = first feature page, 1 = ghost page
+            var COUNT = 150;
             var isActive = false;
-            var ghostPageActive = false;
-            var convergeTarget = null; // {x, y} of the download button
-            var convergeProgress = 0; // 0 = normal, 1 = fully converged
+            var exploding = false;
+            var explodeTime = 0;
+            var btnCharged = false;
+            var absorbed = 0; // how many particles absorbed into button
 
             function resize() {
                 W = window.innerWidth;
@@ -2228,197 +2256,306 @@
             resize();
             window.addEventListener('resize', resize);
 
-            // Create particles
-            for (var i = 0; i < PARTICLE_COUNT; i++) {
+            // Init particles — scattered everywhere
+            for (var i = 0; i < COUNT; i++) {
+                var angle = Math.random() * Math.PI * 2;
+                var speed = 0.15 + Math.random() * 0.35;
                 particles.push({
                     x: Math.random() * window.innerWidth,
                     y: Math.random() * window.innerHeight,
-                    baseVx: (Math.random() - 0.5) * 0.4,
-                    baseVy: -0.1 - Math.random() * 0.3,
-                    vx: 0,
-                    vy: 0,
-                    size: 1 + Math.random() * 2.5,
-                    baseAlpha: 0.08 + Math.random() * 0.25,
+                    homeX: Math.random() * window.innerWidth,
+                    homeY: Math.random() * window.innerHeight,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 1.2 + Math.random() * 2.2,
+                    baseSize: 1.2 + Math.random() * 2.2,
                     alpha: 0,
+                    baseAlpha: 0.12 + Math.random() * 0.3,
                     pulse: Math.random() * Math.PI * 2,
-                    pulseSpeed: 0.008 + Math.random() * 0.02,
-                    hue: Math.random() > 0.5 ? 0 : 1 // 0=purple(139,92,246), 1=blue(100,140,255)
+                    pulseSpeed: 0.01 + Math.random() * 0.02,
+                    hue: Math.random() > 0.4 ? 0 : 1, // 0=purple, 1=blue
+                    absorbed: false,
+                    delay: Math.random() * 0.3 // stagger for converge
                 });
             }
 
-            // Track which feature pages are visible and scroll position
             var featureRace = document.getElementById('feature-race');
             var featureGhost = document.getElementById('feature-ghost');
             var finalBtn = document.querySelector('.final-download-btn');
+            var allFeaturePages = document.querySelectorAll('.feature-page');
 
-            // Detect when feature section is in viewport
-            var featureObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(function(e) {
-                    if (e.target.id === 'feature-race' && e.isIntersecting) isActive = true;
-                    if (e.target.id === 'feature-ghost') {
-                        ghostPageActive = e.isIntersecting;
-                        if (!e.isIntersecting) convergeProgress = 0;
+            // Scroll progress: 0 at race page, 1 at ghost page
+            function getScrollProgress() {
+                if (!featureRace || !featureGhost) return 0;
+                var raceRect = featureRace.getBoundingClientRect();
+                var ghostRect = featureGhost.getBoundingClientRect();
+                // Total scrollable range
+                var startY = raceRect.top;
+                var endY = ghostRect.top;
+                var range = Math.abs(endY - startY) || 1;
+                // How far we've scrolled (0 = race at top of viewport, 1 = ghost at top)
+                var prog = -startY / range;
+                return Math.max(0, Math.min(1, prog));
+            }
+
+            // Get the phone mockup center for the currently visible feature page
+            function getPhoneCenter() {
+                for (var i = 0; i < allFeaturePages.length; i++) {
+                    var page = allFeaturePages[i];
+                    if (page.id === 'feature-ghost') continue;
+                    var rect = page.getBoundingClientRect();
+                    if (rect.top < H * 0.6 && rect.bottom > H * 0.4) {
+                        var phone = page.querySelector('.fv-phone-mockup');
+                        if (phone) {
+                            var pr = phone.getBoundingClientRect();
+                            return { x: pr.left + pr.width / 2, y: pr.top + pr.height / 2 };
+                        }
                     }
+                }
+                return { x: W / 2, y: H / 2 };
+            }
+
+            // Get download button center
+            function getBtnCenter() {
+                if (!finalBtn) return { x: W / 2, y: H * 0.7 };
+                var r = finalBtn.getBoundingClientRect();
+                return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+            }
+
+            // Is ghost page on screen?
+            function isGhostVisible() {
+                if (!featureGhost) return false;
+                var r = featureGhost.getBoundingClientRect();
+                return r.top < H * 0.7 && r.bottom > H * 0.3;
+            }
+
+            // Show/hide canvas
+            var raceObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.isIntersecting) isActive = true;
                 });
-            }, { threshold: 0.05 });
+            }, { threshold: 0.01 });
+            if (featureRace) raceObserver.observe(featureRace);
 
-            if (featureRace) featureObserver.observe(featureRace);
-            if (featureGhost) featureObserver.observe(featureGhost);
-
-            // Also hide when we scroll back above feature pages
             var explainSection = document.getElementById('arena-explain');
             if (explainSection) {
-                var hideObserver = new IntersectionObserver(function(entries) {
+                var hideObs = new IntersectionObserver(function(entries) {
                     entries.forEach(function(e) {
-                        if (e.isIntersecting && e.intersectionRatio > 0.5) isActive = false;
+                        if (e.isIntersecting && e.intersectionRatio > 0.5) {
+                            isActive = false;
+                            // Reset particles when scrolling back up
+                            resetParticles();
+                        }
                     });
                 }, { threshold: 0.5 });
-                hideObserver.observe(explainSection);
+                hideObs.observe(explainSection);
             }
 
-            // Calculate scroll progress through feature pages
-            function updateScrollProgress() {
-                if (!featureRace || !featureGhost) return;
-                var raceTop = featureRace.getBoundingClientRect().top;
-                var ghostBottom = featureGhost.getBoundingClientRect().bottom;
-                var totalHeight = ghostBottom - raceTop;
-                var viewH = window.innerHeight;
-                // Progress: 0 when race page top is at viewport bottom, 1 when ghost bottom is at viewport top
-                var progress = 1 - (ghostBottom / (totalHeight + viewH));
-                scrollProgress = Math.max(0, Math.min(1, progress));
+            function resetParticles() {
+                exploding = false;
+                btnCharged = false;
+                absorbed = 0;
+                if (finalBtn) finalBtn.classList.remove('charged', 'exploding');
+                for (var i = 0; i < particles.length; i++) {
+                    var p = particles[i];
+                    p.absorbed = false;
+                    p.size = p.baseSize;
+                    p.x = Math.random() * W;
+                    p.y = Math.random() * H;
+                    p.alpha = 0;
+                    var angle = Math.random() * Math.PI * 2;
+                    var speed = 0.15 + Math.random() * 0.35;
+                    p.vx = Math.cos(angle) * speed;
+                    p.vy = Math.sin(angle) * speed;
+                }
             }
 
-            // Get converge target position
-            function getConvergeTarget() {
-                if (!finalBtn) return null;
-                var rect = finalBtn.getBoundingClientRect();
-                return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            // ===== EXPLODE ON CLICK =====
+            if (finalBtn) {
+                finalBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (exploding) return;
+
+                    exploding = true;
+                    explodeTime = 0;
+                    finalBtn.classList.add('exploding');
+
+                    // Burst all particles outward from button center
+                    var bc = getBtnCenter();
+                    for (var i = 0; i < particles.length; i++) {
+                        var p = particles[i];
+                        p.absorbed = false;
+                        p.x = bc.x + (Math.random() - 0.5) * (bc.w || 200);
+                        p.y = bc.y + (Math.random() - 0.5) * (bc.h || 60);
+                        var angle = Math.random() * Math.PI * 2;
+                        var force = 4 + Math.random() * 10;
+                        p.vx = Math.cos(angle) * force;
+                        p.vy = Math.sin(angle) * force;
+                        p.alpha = p.baseAlpha * 2;
+                        p.size = p.baseSize * (1.5 + Math.random());
+                    }
+
+                    // After explosion animation, go to App Store
+                    setTimeout(function() {
+                        window.open('https://apps.apple.com', '_blank');
+                    }, 1200);
+                });
             }
 
+            // ===== MAIN ANIMATION LOOP =====
             function animate() {
                 requestAnimationFrame(animate);
 
-                // Toggle canvas visibility
                 if (isActive) {
                     canvas.classList.add('active');
                 } else {
                     canvas.classList.remove('active');
-                    return; // Skip rendering when not visible
+                    return;
                 }
 
                 ctx.clearRect(0, 0, W, H);
-                updateScrollProgress();
 
-                // Converge animation on ghost page
-                if (ghostPageActive) {
-                    convergeTarget = getConvergeTarget();
-                    convergeProgress = Math.min(1, convergeProgress + 0.008);
-                } else {
-                    convergeProgress = Math.max(0, convergeProgress - 0.02);
-                    convergeTarget = null;
-                }
+                var progress = getScrollProgress();
+                var ghostOn = isGhostVisible();
+                var phoneCenter = getPhoneCenter();
+                var btnCenter = getBtnCenter();
 
-                // Eased converge
-                var convergeEased = convergeProgress * convergeProgress * convergeProgress;
+                // Attraction strength ramps up with scroll progress
+                // 0.0 at top (scattered) → strong pull at bottom
+                var attractPower = progress * progress; // quadratic ramp
 
-                // Phone mockup center positions for attraction (approximate viewport center)
-                var attractX = W / 2;
-                var attractY = H / 2;
-
-                // Dynamic particle count increases with scroll
-                var activeCount = Math.floor(PARTICLE_COUNT * (0.5 + scrollProgress * 0.5));
+                // Count absorbed for button charge
+                absorbed = 0;
 
                 for (var i = 0; i < particles.length; i++) {
                     var p = particles[i];
-
-                    // Only show up to activeCount particles
-                    if (i >= activeCount && convergeEased < 0.1) {
-                        p.alpha = Math.max(0, p.alpha - 0.01);
-                        if (p.alpha <= 0) continue;
-                    }
-
                     p.pulse += p.pulseSpeed;
-                    var pulseAlpha = 0.5 + 0.5 * Math.sin(p.pulse);
+                    var pulseA = 0.6 + 0.4 * Math.sin(p.pulse);
 
-                    if (convergeTarget && convergeEased > 0.05) {
-                        // Converge toward download button
-                        var dx = convergeTarget.x - p.x;
-                        var dy = convergeTarget.y - p.y;
+                    if (exploding) {
+                        // Explosion physics — particles fly outward and fade
+                        p.vx *= 0.97; // friction
+                        p.vy *= 0.97;
+                        p.vy += 0.03; // slight gravity
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.alpha *= 0.985;
+                        p.size *= 0.995;
+
+                    } else if (ghostOn && !p.absorbed) {
+                        // ===== CONVERGE INTO BUTTON =====
+                        var dx = btnCenter.x - p.x;
+                        var dy = btnCenter.y - p.y;
                         var dist = Math.sqrt(dx * dx + dy * dy);
-                        var speed = convergeEased * 0.06;
 
-                        p.vx = p.baseVx * (1 - convergeEased) + (dx / dist) * speed * dist * 0.02;
-                        p.vy = p.baseVy * (1 - convergeEased) + (dy / dist) * speed * dist * 0.02;
+                        // Staggered pull — each particle has a small delay
+                        var pullStrength = 0.02 + attractPower * 0.06;
 
-                        // Clamp speed
-                        var maxV = 3 + convergeEased * 5;
-                        var vel = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-                        if (vel > maxV) { p.vx = (p.vx / vel) * maxV; p.vy = (p.vy / vel) * maxV; }
+                        if (dist > 5) {
+                            // Accelerate toward button with damping
+                            p.vx += (dx / dist) * pullStrength * (1 + p.delay);
+                            p.vy += (dy / dist) * pullStrength * (1 + p.delay);
+                            // Damping — smooth deceleration
+                            p.vx *= 0.95;
+                            p.vy *= 0.95;
+                            // Speed limit
+                            var vel = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                            var maxV = 6;
+                            if (vel > maxV) { p.vx = (p.vx / vel) * maxV; p.vy = (p.vy / vel) * maxV; }
 
-                        // Particles near the button get brighter
-                        if (dist < 80) {
-                            p.alpha = p.baseAlpha * (1.5 + convergeEased) * pulseAlpha;
-                            p.size = Math.max(0.5, p.size * 0.995); // shrink as they arrive
-                        } else {
-                            p.alpha = p.baseAlpha * (0.8 + convergeEased * 0.5) * pulseAlpha;
+                            p.x += p.vx;
+                            p.y += p.vy;
+
+                            // Brighten as they approach
+                            var closeness = Math.max(0, 1 - dist / 400);
+                            p.alpha = p.baseAlpha * (0.8 + closeness * 1.5) * pulseA;
                         }
-                    } else {
-                        // Normal drift with slight attraction to center (phones)
-                        var dxCenter = attractX - p.x;
-                        var dyCenter = attractY - p.y;
-                        var attractStrength = scrollProgress * 0.0003;
 
-                        p.vx = p.baseVx + dxCenter * attractStrength;
-                        p.vy = p.baseVy + dyCenter * attractStrength;
-                        p.alpha = p.baseAlpha * (0.6 + scrollProgress * 0.6) * pulseAlpha;
+                        // Absorbed — particle reached the button
+                        if (dist < 30) {
+                            p.absorbed = true;
+                            p.alpha = 0;
+                            absorbed++;
+                        }
+
+                    } else if (p.absorbed) {
+                        // Stay invisible at button
+                        absorbed++;
+                        continue;
+
+                    } else {
+                        // ===== NORMAL SCATTERED + ATTRACTION =====
+                        // Gentle drift
+                        p.x += p.vx;
+                        p.y += p.vy;
+
+                        // Attraction toward phone center (increases with scroll)
+                        if (attractPower > 0.01) {
+                            var dx2 = phoneCenter.x - p.x;
+                            var dy2 = phoneCenter.y - p.y;
+                            var dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                            if (dist2 > 1) {
+                                p.vx += (dx2 / dist2) * attractPower * 0.015;
+                                p.vy += (dy2 / dist2) * attractPower * 0.015;
+                            }
+                            // Gentle damping
+                            p.vx *= 0.995;
+                            p.vy *= 0.995;
+                            // Speed limit for drift
+                            var vel2 = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                            if (vel2 > 1.5) { p.vx = (p.vx / vel2) * 1.5; p.vy = (p.vy / vel2) * 1.5; }
+                        }
+
+                        // Wrap around screen edges
+                        if (p.x < -30) p.x = W + 30;
+                        if (p.x > W + 30) p.x = -30;
+                        if (p.y < -30) p.y = H + 30;
+                        if (p.y > H + 30) p.y = -30;
+
+                        // Alpha ramps up from faint to bright as user scrolls
+                        p.alpha = p.baseAlpha * (0.4 + progress * 0.8) * pulseA;
                     }
 
-                    p.x += p.vx;
-                    p.y += p.vy;
+                    // ===== DRAW =====
+                    if (p.alpha < 0.005) continue;
 
-                    // Wrap around
-                    if (p.y < -20) { p.y = H + 20; p.x = Math.random() * W; }
-                    if (p.y > H + 20) { p.y = -20; p.x = Math.random() * W; }
-                    if (p.x < -20) p.x = W + 20;
-                    if (p.x > W + 20) p.x = -20;
+                    var drawAlpha = Math.min(p.alpha, 1);
+                    var r, g, b;
+                    if (p.hue === 0) { r = 139; g = 92; b = 246; }
+                    else { r = 100; g = 140; b = 255; }
 
-                    // Draw
-                    if (p.alpha <= 0.001) continue;
+                    // Main dot
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    if (p.hue === 0) {
-                        ctx.fillStyle = 'rgba(139,92,246,' + p.alpha.toFixed(3) + ')';
-                    } else {
-                        ctx.fillStyle = 'rgba(100,140,255,' + p.alpha.toFixed(3) + ')';
-                    }
+                    ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + drawAlpha.toFixed(3) + ')';
                     ctx.fill();
 
-                    // Glow effect for converging particles
-                    if (convergeEased > 0.3 && p.alpha > 0.15) {
+                    // Soft glow halo (when closer / brighter)
+                    if (drawAlpha > 0.15) {
                         ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
-                        var glowA = p.alpha * 0.15 * convergeEased;
-                        if (p.hue === 0) {
-                            ctx.fillStyle = 'rgba(139,92,246,' + glowA.toFixed(3) + ')';
-                        } else {
-                            ctx.fillStyle = 'rgba(100,140,255,' + glowA.toFixed(3) + ')';
-                        }
+                        ctx.arc(p.x, p.y, p.size * 3.5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + (drawAlpha * 0.08).toFixed(3) + ')';
                         ctx.fill();
                     }
                 }
 
-                // Draw a glow on the download button when particles converge
-                if (convergeTarget && convergeEased > 0.4) {
-                    var glowSize = 60 + convergeEased * 40;
-                    var grad = ctx.createRadialGradient(convergeTarget.x, convergeTarget.y, 0, convergeTarget.x, convergeTarget.y, glowSize);
-                    var gA = (convergeEased - 0.4) * 0.25;
-                    grad.addColorStop(0, 'rgba(139,92,246,' + gA.toFixed(3) + ')');
-                    grad.addColorStop(0.5, 'rgba(100,140,255,' + (gA * 0.3).toFixed(3) + ')');
-                    grad.addColorStop(1, 'rgba(100,140,255,0)');
-                    ctx.beginPath();
-                    ctx.arc(convergeTarget.x, convergeTarget.y, glowSize, 0, Math.PI * 2);
-                    ctx.fillStyle = grad;
-                    ctx.fill();
+                // ===== BUTTON CHARGE STATE =====
+                var chargeRatio = absorbed / COUNT;
+                if (chargeRatio > 0.5 && !btnCharged && !exploding) {
+                    btnCharged = true;
+                    if (finalBtn) finalBtn.classList.add('charged');
+                }
+                if (chargeRatio < 0.3 && btnCharged && !exploding) {
+                    btnCharged = false;
+                    if (finalBtn) finalBtn.classList.remove('charged');
+                }
+
+                // Explosion timer — reset after animation completes
+                if (exploding) {
+                    explodeTime++;
+                    if (explodeTime > 180) { // ~3 seconds
+                        resetParticles();
+                    }
                 }
             }
 
