@@ -1158,12 +1158,12 @@
                 ctx.clearRect(0, 0, W, H);
                 if (imgsReady < 2) { requestAnimationFrame(animate); return; }
 
+                // Single cover rect from the image — used for EVERYTHING
                 var r = getCoverRect(topImg);
 
-                // If video is playing, draw video onto canvas with same positioning
                 if (videoPlaying && transVideo.readyState >= 2) {
-                    var vr = getCoverRect(transVideo);
-                    ctx.drawImage(transVideo, vr.x, vr.y, vr.w, vr.h);
+                    // Draw video using the SAME rect as the still image — no recalculation
+                    ctx.drawImage(transVideo, r.x, r.y, r.w, r.h);
                 } else {
                     ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
