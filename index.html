@@ -1187,9 +1187,20 @@
 
                 <!-- Scrollable rank carousel — grouped by tier -->
                 <div class="rank-section">
-                    <div class="rank-current">Tier <span class="rank-current-name" id="rank-current-name">Contender</span></div>
+                    <div class="rank-current">Tier <span class="rank-current-name" id="rank-current-name">Underdog</span></div>
                     <div class="rank-carousel-wrap">
                         <div class="rank-carousel" id="rank-carousel">
+                            <!-- Underdog tier -->
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-pixel.png" alt="Glitch"><div class="rank-num">Glitch</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-dj.png" alt="Mute"><div class="rank-num">Mute</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-matrix.png" alt="Bolt"><div class="rank-num">Bolt</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-grumpy.png" alt="Shade"><div class="rank-num">Shade</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-ninja.png" alt="Fang"><div class="rank-num">Fang</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-king.png" alt="Rex"><div class="rank-num">Rex</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-planet.png" alt="Drift"><div class="rank-num">Drift</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-sleepy.png" alt="Haze"><div class="rank-num">Haze</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-explorer.png" alt="Scout"><div class="rank-num">Scout</div></div>
+                            <div class="rank-carousel-item" data-tier="Underdog"><img src="assets/cat-golf.png" alt="Ace"><div class="rank-num">Ace</div></div>
                             <!-- Contender tier -->
                             <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/5.png" alt="Cyber"><div class="rank-num">Cyber</div></div>
                             <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/7.png" alt="Camo"><div class="rank-num">Camo</div></div>
@@ -1709,7 +1720,7 @@
             function updateLabel() {
                 var items = carousel.querySelectorAll('.rank-carousel-item');
                 var center = carousel.scrollLeft + carousel.offsetWidth / 2;
-                var closestTier = 'Contender';
+                var closestTier = 'Underdog';
                 var minDist = Infinity;
                 for (var i = 0; i < items.length; i++) {
                     var itemCenter = items[i].offsetLeft + items[i].offsetWidth / 2;
