@@ -408,16 +408,18 @@
         .enter-arena-btn {
             padding: 18px 56px;
             border-radius: 50px;
-            background: var(--cta-gradient);
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px) saturate(1.4);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
             color: #fff;
             font-family: var(--font);
-            font-weight: 700;
-            font-size: 16px;
-            border: 2px solid rgba(255,255,255,0.25);
+            font-weight: 600;
+            font-size: 15px;
+            border: 1px solid rgba(255,255,255,0.18);
             cursor: pointer;
             pointer-events: auto;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
             letter-spacing: 2px;
             text-transform: uppercase;
             position: relative;
@@ -430,14 +432,15 @@
             position: absolute;
             top: 0; left: -100%;
             width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: btnShimmer 2.5s ease-in-out infinite;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: btnShimmer 3s ease-in-out infinite;
         }
         @keyframes btnShimmer { 0% { left: -100%; } 100% { left: 100%; } }
         .enter-arena-btn:hover {
-            transform: scale(1.12) translateY(-2px);
-            box-shadow: 0 0 60px var(--accent-glow), 0 0 120px var(--accent-glow), 0 12px 40px rgba(0,0,0,0.4);
-            border-color: rgba(255,255,255,0.5);
+            transform: scale(1.08) translateY(-2px);
+            background: rgba(255,255,255,0.14);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 60px rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.35);
         }
         .enter-arena-btn:active {
             transform: scale(1.02);
@@ -476,23 +479,11 @@
         }
 
         /* Transition video overlay — hidden and non-interactive until playing */
-        .hero-transition-video {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 100;
-            object-fit: cover;
-            object-position: center top;
+        /* Hero fading to black — pure CSS transition, no video */
+        .interactive-hero.fading-out {
             opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.6s ease;
+            transition: opacity 1.5s ease;
         }
-        .hero-transition-video.playing {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* Hero gone — instant hide (video already black, site already black) */
         .interactive-hero.gone { display: none; }
 
         /* Main site hidden initially — fades in from pure black */
@@ -537,12 +528,13 @@
         }
         .arena-logo-text {
             font-family: var(--font);
-            font-size: clamp(64px, 12vw, 140px);
-            font-weight: 900;
-            letter-spacing: 0.25em;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 10px;
             color: #fff;
-            text-shadow: 0 0 80px rgba(139,92,246,0.3), 0 0 160px rgba(139,92,246,0.1);
-            padding-left: 0.25em;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(0,0,0,0.8);
+            padding-left: 10px;
         }
         .arena-logo-line {
             width: 0;
@@ -626,19 +618,95 @@
         .main-site.revealed .arena-pill:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 2.3s; }
         .main-site.revealed .arena-pill:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 2.45s; }
 
+        /* Scroll arrow — bouncing */
+        .arena-arrow {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .main-site.revealed .arena-arrow {
+            opacity: 1;
+            transition-delay: 2.2s;
+            animation: arrowBounce 2s ease-in-out 3s infinite;
+        }
+        .arena-arrow svg {
+            width: 28px; height: 28px;
+            stroke: rgba(255,255,255,0.4);
+            transition: stroke 0.3s ease;
+        }
+        .arena-arrow:hover svg { stroke: rgba(255,255,255,0.8); }
+        @keyframes arrowBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(12px); }
+        }
+
+        /* Explanation section */
+        .arena-explain {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .explain-content {
+            max-width: 680px;
+            text-align: center;
+            padding: 80px 24px;
+        }
+        .explain-label {
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(139,92,246,0.7);
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .explain-title {
+            font-family: var(--font);
+            font-size: clamp(28px, 5vw, 44px);
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .explain-text {
+            font-family: var(--font);
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .explain-content.visible .explain-label { opacity: 1; transform: translateY(0); transition-delay: 0s; }
+        .explain-content.visible .explain-title { opacity: 1; transform: translateY(0); transition-delay: 0.15s; }
+        .explain-content.visible .explain-text { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
+        .explain-content.visible .arena-pill:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.45s; }
+        .explain-content.visible .arena-pill:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.55s; }
+        .explain-content.visible .arena-pill:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.65s; }
+        .explain-content.visible .arena-pill:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.75s; }
+        .explain-content.visible .arena-cta { opacity: 1; transform: translateY(0); transition-delay: 0.9s; }
+
         /* Download CTA */
         .arena-cta {
-            margin-top: 56px;
+            margin-top: 48px;
             text-align: center;
             z-index: 1;
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-        .main-site.revealed .arena-cta {
-            opacity: 1;
-            transform: translateY(0);
-            transition-delay: 2.8s;
         }
         .arena-download-btn {
             display: inline-flex;
@@ -732,11 +800,6 @@
         <div class="cursor-glow" id="cursor-glow"></div>
         <div class="reveal-edge-glow" id="reveal-edge-glow"></div>
 
-        <!-- Transition video — plays when Enter button is pressed -->
-        <video class="hero-transition-video" id="hero-transition-video" muted playsinline preload="auto">
-            <source src="assets/hero-transition.mp4" type="video/mp4">
-        </video>
-
         <!-- RIVAL text — above the girl's head -->
         <div class="hero-brand-text" id="hero-brand-text">R I V A L</div>
 
@@ -753,18 +816,16 @@
 
     <!-- ========== ARENA PAGE (revealed after Enter) ========== -->
     <div class="main-site" id="main-site">
-        <div class="arena-page">
 
-            <!-- Floating particles for atmosphere -->
+        <!-- SCREEN 1: Intro with RIVAL text + scroll arrow -->
+        <div class="arena-page arena-intro" id="arena-intro">
             <canvas class="arena-particles" id="arena-particles"></canvas>
 
-            <!-- Main RIVAL logo reveal -->
             <div class="arena-logo" id="arena-logo">
-                <div class="arena-logo-text">RIVAL</div>
+                <div class="arena-logo-text">R I V A L</div>
                 <div class="arena-logo-line"></div>
             </div>
 
-            <!-- Tagline -->
             <div class="arena-tagline" id="arena-tagline">
                 <span class="arena-word">Turn</span>
                 <span class="arena-word">Every</span>
@@ -774,40 +835,54 @@
                 <span class="arena-word arena-word-accent">Battle</span>
             </div>
 
-            <!-- Feature pills -->
-            <div class="arena-features" id="arena-features">
-                <div class="arena-pill">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Real-Time GPS Racing
-                </div>
-                <div class="arena-pill">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/></svg>
-                    Competitive Rankings
-                </div>
-                <div class="arena-pill">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M12 7V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"/><circle cx="12" cy="14" r="3"/></svg>
-                    Apple Watch
-                </div>
-                <div class="arena-pill">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    Share Cards
-                </div>
+            <!-- Scroll arrow -->
+            <div class="arena-arrow" id="arena-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
             </div>
-
-            <!-- Download CTA -->
-            <div class="arena-cta" id="arena-cta">
-                <a href="#" class="arena-download-btn">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Download for iOS
-                </a>
-                <div class="arena-sub">Free on the App Store</div>
-            </div>
-
         </div>
+
+        <!-- SCREEN 2: Explanation section -->
+        <div class="arena-page arena-explain" id="arena-explain">
+            <div class="explain-content">
+                <div class="explain-label">What is Rival?</div>
+                <h2 class="explain-title">The first real-time<br>head-to-head fitness app</h2>
+                <p class="explain-text">Challenge friends to live GPS races. Track each other's distance, pace, and heart rate in real-time. Climb competitive rankings from Underdog to Legend. Share premium victory cards.</p>
+
+                <div class="arena-features" id="arena-features">
+                    <div class="arena-pill">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Real-Time GPS Racing
+                    </div>
+                    <div class="arena-pill">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/></svg>
+                        Competitive Rankings
+                    </div>
+                    <div class="arena-pill">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M12 7V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"/><circle cx="12" cy="14" r="3"/></svg>
+                        Apple Watch
+                    </div>
+                    <div class="arena-pill">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                        Share Cards
+                    </div>
+                </div>
+
+                <div class="arena-cta" id="arena-cta">
+                    <a href="#" class="arena-download-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                        Download for iOS
+                    </a>
+                    <div class="arena-sub">Free on the App Store</div>
+                </div>
+            </div>
+        </div>
+
     </div><!-- end .main-site -->
 
     <script>
-        // ========== INTERACTIVE HERO — LIQUID BRUSH TRAIL REVEAL ==========
+        // ========== INTERACTIVE HERO — LIQUID BRUSH REVEAL (ECHO-STYLE) ==========
         (function() {
             var hero = document.getElementById('interactive-hero');
             var canvas = document.getElementById('liquid-canvas');
@@ -815,7 +890,6 @@
             var enterBtn = document.getElementById('enter-arena-btn');
             var mainSite = document.getElementById('main-site');
 
-            // Preload BOTH images for canvas drawing — guarantees pixel-perfect alignment
             var topImg = new Image();
             topImg.src = 'assets/hero-base.jpg';
             var baseImg = new Image();
@@ -824,21 +898,32 @@
             var W, H, dpr;
             var isAnimating = true;
             var imgsReady = 0;
-            // Responsive blob radius — smaller on mobile
-            var blobRadius = window.innerWidth <= 768 ? 120 : 260;
+            var blobRadius;
 
             topImg.onload = function() { imgsReady++; };
             baseImg.onload = function() { imgsReady++; };
 
-            // Smooth cursor
+            // Cursor state
             var targetX = -999, targetY = -999;
             var smoothX = -999, smoothY = -999;
             var prevX = -999, prevY = -999;
             var isActive = false;
 
-            // Persistent mask — accumulates brush strokes, never cleared
+            // Trail history for smooth quadratic curves
+            var trail = [];
+            var MAX_TRAIL = 6;
+
+            // Persistent mask canvas — accumulates reveal, never cleared
             var maskCanvas = document.createElement('canvas');
             var maskCtx = maskCanvas.getContext('2d');
+
+            // Blurred mask canvas — softened copy for compositing
+            var blurCanvas = document.createElement('canvas');
+            var blurCtx = blurCanvas.getContext('2d');
+
+            // Offscreen canvas for compositing
+            var offCanvas = document.createElement('canvas');
+            var offCtx = offCanvas.getContext('2d');
 
             function resize() {
                 dpr = window.devicePixelRatio || 1;
@@ -849,10 +934,16 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                blobRadius = W <= 480 ? 70 : W <= 768 ? 100 : 180;
+                blobRadius = W <= 480 ? 65 : W <= 768 ? 100 : 160;
                 maskCanvas.width = W * dpr;
                 maskCanvas.height = H * dpr;
                 maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                blurCanvas.width = W * dpr;
+                blurCanvas.height = H * dpr;
+                blurCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                offCanvas.width = W * dpr;
+                offCanvas.height = H * dpr;
+                offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
             resize();
             window.addEventListener('resize', resize);
@@ -864,7 +955,7 @@
                 return { x: (W - dw) / 2, y: 0, w: dw, h: dh };
             }
 
-            // Input
+            // Input handlers
             hero.addEventListener('mousemove', function(e) {
                 targetX = e.clientX; targetY = e.clientY; isActive = true;
             });
@@ -879,6 +970,7 @@
                     targetX = e.touches[0].clientX; targetY = e.touches[0].clientY;
                     smoothX = targetX; smoothY = targetY;
                     prevX = targetX; prevY = targetY;
+                    trail = [{ x: targetX, y: targetY }];
                     isActive = true;
                 }
             }, { passive: true });
@@ -887,56 +979,53 @@
                 targetX = e.clientX; targetY = e.clientY;
                 smoothX = targetX; smoothY = targetY;
                 prevX = targetX; prevY = targetY;
+                trail = [{ x: targetX, y: targetY }];
                 isActive = true;
             });
 
-            // Offscreen canvas for compositing
-            var offCanvas = document.createElement('canvas');
-            var offCtx = offCanvas.getContext('2d');
+            // Interpolate sub-steps between two points for ultra-smooth painting
+            function paintSegment(x1, y1, x2, y2) {
+                var dx = x2 - x1, dy = y2 - y1;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                var steps = Math.max(1, Math.ceil(dist / (blobRadius * 0.3)));
+
+                for (var i = 0; i <= steps; i++) {
+                    var t = i / steps;
+                    var x = x1 + dx * t;
+                    var y = y1 + dy * t;
+                    maskCtx.beginPath();
+                    maskCtx.arc(x, y, blobRadius, 0, Math.PI * 2);
+                    maskCtx.fill();
+                }
+            }
 
             function animate() {
                 if (!isAnimating) return;
 
-                // Smooth cursor
+                // Smooth cursor interpolation — responsive but fluid
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.12;
-                smoothY += (targetY - smoothY) * 0.12;
+                smoothX += (targetX - smoothX) * 0.18;
+                smoothY += (targetY - smoothY) * 0.18;
 
-                // Paint new brush segment onto persistent mask
+                // Paint onto persistent mask
                 if (isActive && smoothX > -500 && prevX > -500) {
                     var dx = smoothX - prevX, dy = smoothY - prevY;
                     var speed = Math.sqrt(dx * dx + dy * dy);
 
-                    if (speed > 0.3) {
-                        maskCtx.lineCap = 'round';
-                        maskCtx.lineJoin = 'round';
+                    maskCtx.fillStyle = '#fff';
 
-                        // Tiny soft edge — just barely wider, low alpha
-                        maskCtx.lineWidth = blobRadius * 1.1;
-                        maskCtx.strokeStyle = 'rgba(255,255,255,0.18)';
-                        maskCtx.beginPath();
-                        maskCtx.moveTo(prevX, prevY);
-                        maskCtx.lineTo(smoothX, smoothY);
-                        maskCtx.stroke();
+                    if (speed > 0.2) {
+                        // Paint interpolated circles along the path for gapless coverage
+                        paintSegment(prevX, prevY, smoothX, smoothY);
 
-                        // Core brush stroke — solid, clean
-                        maskCtx.lineWidth = blobRadius * 0.95;
-                        maskCtx.strokeStyle = '#fff';
-                        maskCtx.beginPath();
-                        maskCtx.moveTo(prevX, prevY);
-                        maskCtx.lineTo(smoothX, smoothY);
-                        maskCtx.stroke();
+                        // Track trail for curve smoothness
+                        trail.push({ x: smoothX, y: smoothY });
+                        if (trail.length > MAX_TRAIL) trail.shift();
                     }
 
-                    // Cursor circle on mask — soft edge + solid core
+                    // Always stamp at current position
                     maskCtx.beginPath();
-                    maskCtx.arc(smoothX, smoothY, blobRadius * 1.06, 0, Math.PI * 2);
-                    maskCtx.fillStyle = 'rgba(255,255,255,0.18)';
-                    maskCtx.fill();
-
-                    maskCtx.beginPath();
-                    maskCtx.arc(smoothX, smoothY, blobRadius * 0.92, 0, Math.PI * 2);
-                    maskCtx.fillStyle = '#fff';
+                    maskCtx.arc(smoothX, smoothY, blobRadius, 0, Math.PI * 2);
                     maskCtx.fill();
                 }
 
@@ -952,76 +1041,82 @@
                 // Base (rival) image — revealed underneath
                 ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                // Top image with mask punched through
-                offCanvas.width = W * dpr;
-                offCanvas.height = H * dpr;
-                offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                // Create softened mask — apply Gaussian blur for organic edges
+                blurCtx.clearRect(0, 0, W, H);
+                blurCtx.filter = 'blur(' + Math.round(blobRadius * 0.15) + 'px)';
+                blurCtx.drawImage(maskCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                blurCtx.filter = 'none';
 
+                // Top image with blurred mask punched through
+                offCtx.clearRect(0, 0, W, H);
                 offCtx.globalCompositeOperation = 'source-over';
                 offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
                 offCtx.globalCompositeOperation = 'destination-out';
-                offCtx.drawImage(maskCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                offCtx.drawImage(blurCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
 
                 // Composite onto main canvas
+                offCtx.globalCompositeOperation = 'source-over';
                 ctx.drawImage(offCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
 
                 requestAnimationFrame(animate);
             }
             animate();
 
-            // ENTER BUTTON — fade text, play transition video, then reveal site
-            var transitionVideo = document.getElementById('hero-transition-video');
+            // ENTER BUTTON — pure CSS fade to black, no video
             var heroBrandText = document.getElementById('hero-brand-text');
             var heroBtnWrap = document.getElementById('hero-btn-wrap');
             var touchHint = document.getElementById('touch-hint');
 
             enterBtn.addEventListener('click', function() {
-                // 1. Fade out all text/buttons
+                // 1. Fade out text/buttons
                 heroBrandText.classList.add('fading');
                 heroBtnWrap.classList.add('fading');
                 touchHint.classList.add('fading');
 
-                // 2. After text fades, crossfade canvas into video
+                // 2. After text fades, fade entire hero to black
                 setTimeout(function() {
-                    transitionVideo.classList.add('playing');
-                    transitionVideo.currentTime = 0;
-                    transitionVideo.play().catch(function() {});
+                    hero.classList.add('fading-out');
+                    isAnimating = false;
 
-                    // Stop canvas once video is fully visible
-                    setTimeout(function() { isAnimating = false; }, 600);
-
-                    // 3. Near end of video (last ~1s is pure black) — start revealing site
-                    transitionVideo.addEventListener('timeupdate', function onTime() {
-                        if (transitionVideo.currentTime >= transitionVideo.duration - 0.8) {
-                            transitionVideo.removeEventListener('timeupdate', onTime);
-                            // Site is black, hero is black — seamless handoff
-                            mainSite.classList.add('revealed');
-                            document.body.style.overflow = '';
-                            window.scrollTo(0, 0);
-                        }
-                    });
-
-                    // When video fully ends, remove hero from DOM
-                    transitionVideo.addEventListener('ended', function() {
-                        hero.classList.add('gone');
-                    }, { once: true });
-
-                    // Fallback
+                    // 3. Once hero is invisible, reveal arena
                     setTimeout(function() {
-                        if (!hero.classList.contains('gone')) {
-                            mainSite.classList.add('revealed');
-                            document.body.style.overflow = '';
-                            hero.classList.add('gone');
-                        }
-                    }, 10000);
-                }, 400);
+                        mainSite.classList.add('revealed');
+                        document.body.style.overflow = '';
+                        window.scrollTo(0, 0);
+                        hero.classList.add('gone');
+                    }, 1600);
+                }, 500);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
             enterBtn.addEventListener('mouseleave', function() { hero.style.cursor = 'none'; });
 
             document.body.style.overflow = 'hidden';
+        })();
+
+        // ========== ARENA: SCROLL ARROW + SCROLL ANIMATIONS ==========
+        (function() {
+            var arrow = document.getElementById('arena-arrow');
+            var explain = document.getElementById('arena-explain');
+            if (arrow && explain) {
+                arrow.addEventListener('click', function() {
+                    explain.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            // Scroll-triggered reveal for explanation section
+            var explainContent = explain ? explain.querySelector('.explain-content') : null;
+            if (explainContent) {
+                var obs = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                        }
+                    });
+                }, { threshold: 0.2 });
+                obs.observe(explainContent);
+            }
         })();
 
         // ========== ARENA PARTICLE ANIMATION ==========
