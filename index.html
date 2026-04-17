@@ -859,6 +859,7 @@
             font-weight: 800;
             color: #fff;
             line-height: 1.2;
+            letter-spacing: -0.01em;
             margin-bottom: 20px;
             opacity: 0;
             transform: translateY(20px);
@@ -867,8 +868,10 @@
         .explain-title .accent { color: rgba(160,190,255,0.9); }
         .explain-text {
             font-family: var(--font);
-            font-size: 16px;
-            line-height: 1.7;
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.8;
+            letter-spacing: 0.02em;
             color: rgba(255,255,255,0.4);
             margin-bottom: 40px;
             max-width: 520px;
@@ -1049,6 +1052,15 @@
         @media (max-width: 480px) {
             .theme-switcher { gap: 4px; }
             .theme-btn { width: 24px; height: 24px; }
+            .avatar-showcase { gap: 14px; }
+            .avatar-card { width: 85px; height: 85px; border-radius: 20px; padding: 10px; }
+            .vs-badge { width: 40px; height: 40px; font-size: 12px; }
+            .explain-content { padding: 40px 16px; }
+            .explain-text { font-size: 14px; }
+            .rank-carousel-item { width: 56px; }
+            .rank-carousel-item img { width: 40px; height: 40px; }
+            .rank-carousel-item .rank-num { font-size: 8px; }
+            .rank-carousel { gap: 10px; }
         }
     </style>
 </head>
@@ -1144,38 +1156,42 @@
                 <h2 class="explain-title">That rush when you <span class="accent">pull ahead</span>.<br>That fire when you <span class="accent">won't quit</span>.</h2>
                 <p class="explain-text">Every race is personal. Your heart's pounding, your rival's gaining — and the only thing between you and the top is how badly you want it. This isn't a fitness app. It's war.</p>
 
-                <!-- Scrollable rank carousel — all 27 ranks -->
+                <!-- Scrollable rank carousel — grouped by tier -->
                 <div class="rank-section">
-                    <div class="rank-current">Rank <span class="rank-current-name" id="rank-current-name">1 of 27</span></div>
+                    <div class="rank-current">Tier <span class="rank-current-name" id="rank-current-name">Contender</span></div>
                     <div class="rank-carousel-wrap">
                         <div class="rank-carousel" id="rank-carousel">
-                            <div class="rank-carousel-item" data-rank="1"><img src="assets/ranks/1.png" alt="Rank 1"><div class="rank-num">01</div></div>
-                            <div class="rank-carousel-item" data-rank="2"><img src="assets/ranks/2.png" alt="Rank 2"><div class="rank-num">02</div></div>
-                            <div class="rank-carousel-item" data-rank="3"><img src="assets/ranks/3.png" alt="Rank 3"><div class="rank-num">03</div></div>
-                            <div class="rank-carousel-item" data-rank="4"><img src="assets/ranks/4.png" alt="Rank 4"><div class="rank-num">04</div></div>
-                            <div class="rank-carousel-item" data-rank="5"><img src="assets/ranks/5.png" alt="Rank 5"><div class="rank-num">05</div></div>
-                            <div class="rank-carousel-item" data-rank="6"><img src="assets/ranks/6.png" alt="Rank 6"><div class="rank-num">06</div></div>
-                            <div class="rank-carousel-item" data-rank="7"><img src="assets/ranks/7.png" alt="Rank 7"><div class="rank-num">07</div></div>
-                            <div class="rank-carousel-item" data-rank="8"><img src="assets/ranks/8.png" alt="Rank 8"><div class="rank-num">08</div></div>
-                            <div class="rank-carousel-item" data-rank="9"><img src="assets/ranks/9.png" alt="Rank 9"><div class="rank-num">09</div></div>
-                            <div class="rank-carousel-item" data-rank="10"><img src="assets/ranks/10.png" alt="Rank 10"><div class="rank-num">10</div></div>
-                            <div class="rank-carousel-item" data-rank="11"><img src="assets/ranks/11.png" alt="Rank 11"><div class="rank-num">11</div></div>
-                            <div class="rank-carousel-item" data-rank="12"><img src="assets/ranks/12.png" alt="Rank 12"><div class="rank-num">12</div></div>
-                            <div class="rank-carousel-item" data-rank="13"><img src="assets/ranks/13.png" alt="Rank 13"><div class="rank-num">13</div></div>
-                            <div class="rank-carousel-item" data-rank="14"><img src="assets/ranks/14.png" alt="Rank 14"><div class="rank-num">14</div></div>
-                            <div class="rank-carousel-item" data-rank="15"><img src="assets/ranks/15.png" alt="Rank 15"><div class="rank-num">15</div></div>
-                            <div class="rank-carousel-item" data-rank="16"><img src="assets/ranks/16.png" alt="Rank 16"><div class="rank-num">16</div></div>
-                            <div class="rank-carousel-item" data-rank="17"><img src="assets/ranks/17.png" alt="Rank 17"><div class="rank-num">17</div></div>
-                            <div class="rank-carousel-item" data-rank="18"><img src="assets/ranks/18.png" alt="Rank 18"><div class="rank-num">18</div></div>
-                            <div class="rank-carousel-item" data-rank="19"><img src="assets/ranks/19.png" alt="Rank 19"><div class="rank-num">19</div></div>
-                            <div class="rank-carousel-item" data-rank="20"><img src="assets/ranks/20.png" alt="Rank 20"><div class="rank-num">20</div></div>
-                            <div class="rank-carousel-item" data-rank="21"><img src="assets/ranks/21.png" alt="Rank 21"><div class="rank-num">21</div></div>
-                            <div class="rank-carousel-item" data-rank="22"><img src="assets/ranks/22.png" alt="Rank 22"><div class="rank-num">22</div></div>
-                            <div class="rank-carousel-item" data-rank="23"><img src="assets/ranks/23.png" alt="Rank 23"><div class="rank-num">23</div></div>
-                            <div class="rank-carousel-item" data-rank="24"><img src="assets/ranks/24.png" alt="Rank 24"><div class="rank-num">24</div></div>
-                            <div class="rank-carousel-item" data-rank="25"><img src="assets/ranks/25.png" alt="Rank 25"><div class="rank-num">25</div></div>
-                            <div class="rank-carousel-item" data-rank="26"><img src="assets/ranks/26.png" alt="Rank 26"><div class="rank-num">26</div></div>
-                            <div class="rank-carousel-item" data-rank="27"><img src="assets/ranks/27.png" alt="Rank 27"><div class="rank-num">27</div></div>
+                            <!-- Contender tier -->
+                            <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/5.png" alt="Cyber"><div class="rank-num">Cyber</div></div>
+                            <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/7.png" alt="Camo"><div class="rank-num">Camo</div></div>
+                            <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/25.png" alt="Inferno"><div class="rank-num">Inferno</div></div>
+                            <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/26.png" alt="Crown"><div class="rank-num">Crown</div></div>
+                            <div class="rank-carousel-item" data-tier="Contender"><img src="assets/ranks/27.png" alt="Mystic"><div class="rank-num">Mystic</div></div>
+                            <!-- Breakout tier -->
+                            <div class="rank-carousel-item" data-tier="Breakout"><img src="assets/ranks/6.png" alt="Royal"><div class="rank-num">Royal</div></div>
+                            <div class="rank-carousel-item" data-tier="Breakout"><img src="assets/ranks/9.png" alt="Steel"><div class="rank-num">Steel</div></div>
+                            <div class="rank-carousel-item" data-tier="Breakout"><img src="assets/ranks/12.png" alt="Spirit"><div class="rank-num">Spirit</div></div>
+                            <!-- Ace tier -->
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/2.png" alt="Pharaoh"><div class="rank-num">Pharaoh</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/3.png" alt="Void"><div class="rank-num">Void</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/4.png" alt="Kitsune"><div class="rank-num">Kitsune</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/8.png" alt="Victor"><div class="rank-num">Victor</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/10.png" alt="Ember"><div class="rank-num">Ember</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/11.png" alt="Prism"><div class="rank-num">Prism</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/14.png" alt="Cosmos"><div class="rank-num">Cosmos</div></div>
+                            <div class="rank-carousel-item" data-tier="Ace"><img src="assets/ranks/22.png" alt="Circuit"><div class="rank-num">Circuit</div></div>
+                            <!-- Legend tier -->
+                            <div class="rank-carousel-item" data-tier="Legend"><img src="assets/ranks/15.png" alt="Nebula"><div class="rank-num">Nebula</div></div>
+                            <div class="rank-carousel-item" data-tier="Legend"><img src="assets/ranks/16.png" alt="Galaxy"><div class="rank-num">Galaxy</div></div>
+                            <div class="rank-carousel-item" data-tier="Legend"><img src="assets/ranks/17.png" alt="Amethyst"><div class="rank-num">Amethyst</div></div>
+                            <div class="rank-carousel-item" data-tier="Legend"><img src="assets/ranks/24.png" alt="Pearl"><div class="rank-num">Pearl</div></div>
+                            <!-- Mythic tier -->
+                            <div class="rank-carousel-item" data-tier="Mythic"><img src="assets/ranks/13.png" alt="Obsidian"><div class="rank-num">Obsidian</div></div>
+                            <div class="rank-carousel-item" data-tier="Mythic"><img src="assets/ranks/18.png" alt="Cultist"><div class="rank-num">Cultist</div></div>
+                            <div class="rank-carousel-item" data-tier="Mythic"><img src="assets/ranks/19.png" alt="Aurora"><div class="rank-num">Aurora</div></div>
+                            <div class="rank-carousel-item" data-tier="Mythic"><img src="assets/ranks/20.png" alt="Dragon"><div class="rank-num">Dragon</div></div>
+                            <div class="rank-carousel-item" data-tier="Mythic"><img src="assets/ranks/21.png" alt="Phoenix"><div class="rank-num">Phoenix</div></div>
+                            <div class="rank-carousel-item" data-tier="Mythic"><img src="assets/ranks/23.png" alt="Celestial"><div class="rank-num">Celestial</div></div>
                         </div>
                     </div>
                 </div>
@@ -1498,6 +1514,7 @@
                 // Play video and draw it onto the SAME canvas with the SAME getCoverRect
                 // No separate HTML element visible — guaranteed pixel-perfect match
                 transVideo.currentTime = 0;
+                transVideo.playbackRate = 1.6;
                 transVideo.play().then(function() {
                     videoPlaying = true;
                 }).catch(function() {
@@ -1659,18 +1676,18 @@
                 carousel.scrollLeft = scrollLeft - (x - startX) * 1.5;
             });
 
-            // Update rank label on scroll
+            // Update tier label on scroll
             function updateLabel() {
                 var items = carousel.querySelectorAll('.rank-carousel-item');
                 var center = carousel.scrollLeft + carousel.offsetWidth / 2;
-                var closest = 1;
+                var closestTier = 'Contender';
                 var minDist = Infinity;
                 for (var i = 0; i < items.length; i++) {
                     var itemCenter = items[i].offsetLeft + items[i].offsetWidth / 2;
                     var dist = Math.abs(center - itemCenter);
-                    if (dist < minDist) { minDist = dist; closest = parseInt(items[i].dataset.rank); }
+                    if (dist < minDist) { minDist = dist; closestTier = items[i].dataset.tier; }
                 }
-                label.textContent = closest + ' of 27';
+                label.textContent = closestTier;
             }
             carousel.addEventListener('scroll', updateLabel);
         })();
