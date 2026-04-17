@@ -348,19 +348,18 @@
             width: 100%; height: 100%;
         }
 
-        /* Both layers fill the container */
+        /* Both layers fill the container identically */
         .reveal-container img {
             position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: auto; height: 100%;
-            max-width: none;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             object-fit: cover;
+            object-position: center top;
             user-select: none;
             -webkit-user-drag: none;
         }
 
-        /* Base = rival version (white outfit, red eyes) — always visible underneath */
+        /* Base = rival version — always visible underneath */
         .reveal-base {
             z-index: 1;
         }
@@ -377,36 +376,8 @@
             pointer-events: none;
         }
 
-        /* Custom cursor glow that follows mouse */
-        .cursor-glow {
-            position: fixed;
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 40%, transparent 70%);
-            pointer-events: none;
-            z-index: 100;
-            transform: translate(-50%, -50%);
-            mix-blend-mode: overlay;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .interactive-hero:hover .cursor-glow,
-        .interactive-hero:active .cursor-glow { opacity: 1; }
-
-        /* Subtle edge glow on the reveal border */
-        .reveal-edge-glow {
-            position: fixed;
-            width: 300px; height: 300px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 3;
-            transform: translate(-50%, -50%);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            filter: blur(20px);
-        }
-        .interactive-hero:hover .reveal-edge-glow { opacity: 0.4; }
+        /* Cursor glow and edge glow removed — clean reveal only */
+        .cursor-glow, .reveal-edge-glow { display: none; }
 
         /* Center content overlay */
         .hero-center-content {
@@ -865,13 +836,11 @@
     </div><!-- end .main-site -->
 
     <script>
-        // ========== INTERACTIVE HERO — LIQUID BLOB MASK REVEAL ==========
+        // ========== INTERACTIVE HERO — LIQUID BRUSH TRAIL REVEAL ==========
         (function() {
             var hero = document.getElementById('interactive-hero');
             var canvas = document.getElementById('liquid-canvas');
             var ctx = canvas.getContext('2d');
-            var cursorGlow = document.getElementById('cursor-glow');
-            var edgeGlow = document.getElementById('reveal-edge-glow');
             var enterBtn = document.getElementById('enter-arena-btn');
             var mainSite = document.getElementById('main-site');
 
@@ -880,30 +849,25 @@
             topImg.src = 'assets/hero-base.jpg';
 
             var W, H, dpr;
-            var targetX = -500, targetY = -500;
-            var smoothX = -500, smoothY = -500;
             var isAnimating = true;
-            var isActive = false;
-            var blobRadius = 280; // BIG blob
             var imgReady = false;
-
-            // Track mouse velocity for liquid distortion
-            var prevSmoothX = -500, prevSmoothY = -500;
-            var velocityX = 0, velocityY = 0;
+            var blobRadius = 260;
 
             topImg.onload = function() { imgReady = true; };
 
-            // Blob organic wobble points — driven by mouse velocity, not time
+            // Trail of recent cursor positions for liquid brush smear
+            var trail = []; // { x, y, vx, vy, age }
+            var maxTrail = 20; // how many trail blobs
+            var trailLifetime = 25; // frames before a trail point fades completely
+
+            // Smooth cursor
+            var targetX = -999, targetY = -999;
+            var smoothX = -999, smoothY = -999;
+            var prevX = -999, prevY = -999;
+            var isActive = false;
+
+            // Blob points for liquid shape
             var blobPoints = 16;
-            var blobNoise = [];
-            for (var i = 0; i < blobPoints; i++) {
-                blobNoise.push({
-                    phase: Math.random() * Math.PI * 2,
-                    sensitivity: 0.3 + Math.random() * 0.7, // how much this point reacts to velocity
-                    dirX: Math.cos((i / blobPoints) * Math.PI * 2), // direction sensitivity
-                    dirY: Math.sin((i / blobPoints) * Math.PI * 2)
-                });
-            }
 
             function resize() {
                 dpr = window.devicePixelRatio || 1;
@@ -918,12 +882,12 @@
             resize();
             window.addEventListener('resize', resize);
 
-            // Calculate cover-fit draw params (same as CSS object-fit: cover, centered)
+            // Cover-fit calculation matching CSS object-fit:cover + object-position:center top
             function getCoverRect(img) {
                 var iw = img.naturalWidth, ih = img.naturalHeight;
                 var scale = Math.max(W / iw, H / ih);
                 var dw = iw * scale, dh = ih * scale;
-                return { x: (W - dw) / 2, y: (H - dh) / 2, w: dw, h: dh };
+                return { x: (W - dw) / 2, y: 0, w: dw, h: dh }; // top-aligned like CSS
             }
 
             // Input
@@ -939,52 +903,66 @@
             hero.addEventListener('touchstart', function(e) {
                 if (e.touches.length > 0) {
                     targetX = e.touches[0].clientX; targetY = e.touches[0].clientY;
+                    smoothX = targetX; smoothY = targetY;
+                    prevX = targetX; prevY = targetY;
                     isActive = true;
                 }
             }, { passive: true });
             hero.addEventListener('mouseleave', function() { isActive = false; });
             hero.addEventListener('mouseenter', function(e) {
-                targetX = e.clientX; targetY = e.clientY; isActive = true;
+                targetX = e.clientX; targetY = e.clientY;
+                smoothX = targetX; smoothY = targetY;
+                prevX = targetX; prevY = targetY;
+                isActive = true;
             });
 
-            // Draw liquid blob — shape distorts based on mouse VELOCITY, not time
-            function drawLiquidBlob(cx, cy, radius, vx, vy) {
+            // Draw a distorted liquid blob — stretches based on velocity
+            function drawLiquidBlob(cx, cy, radius, vx, vy, alpha) {
                 var speed = Math.sqrt(vx * vx + vy * vy);
-                var maxDistort = Math.min(speed * 0.8, radius * 0.45); // cap distortion
+                // Normalize velocity direction
+                var nx = speed > 0.5 ? vx / speed : 0;
+                var ny = speed > 0.5 ? vy / speed : 0;
+                // Stretch factor based on speed
+                var stretch = Math.min(speed * 1.2, radius * 0.8);
+                // Perpendicular squish
+                var squish = Math.min(speed * 0.3, radius * 0.25);
 
-                var points = [];
-                for (var i = 0; i < blobPoints; i++) {
-                    var angle = (i / blobPoints) * Math.PI * 2;
-                    var n = blobNoise[i];
-
-                    // Each point stretches/compresses based on how aligned it is with movement direction
-                    var dot = n.dirX * vx + n.dirY * vy; // dot product with velocity
-                    var stretch = dot * n.sensitivity * 0.6; // positive = point pushed outward in movement dir
-
-                    // Cross-axis squish (perpendicular to movement = compress)
-                    var cross = Math.abs(-n.dirY * vx + n.dirX * vy);
-                    var squish = cross * n.sensitivity * -0.15;
-
-                    var r = radius + stretch + squish;
-                    // Clamp to reasonable range
-                    r = Math.max(radius * 0.6, Math.min(radius * 1.5, r));
-
-                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
-                }
-
-                // Draw smooth closed curve using Catmull-Rom splines
                 ctx.beginPath();
-                for (var i = 0; i < points.length; i++) {
-                    var p0 = points[(i - 1 + points.length) % points.length];
-                    var p1 = points[i];
-                    var p2 = points[(i + 1) % points.length];
-                    var p3 = points[(i + 2) % points.length];
-                    if (i === 0) ctx.moveTo(p1.x, p1.y);
-                    var cp1x = p1.x + (p2.x - p0.x) / 6;
-                    var cp1y = p1.y + (p2.y - p0.y) / 6;
-                    var cp2x = p2.x - (p3.x - p1.x) / 6;
-                    var cp2y = p2.y - (p3.y - p1.y) / 6;
-                    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+                for (var i = 0; i <= blobPoints; i++) {
+                    var idx = i % blobPoints;
+                    var angle = (idx / blobPoints) * Math.PI * 2;
+                    var cosA = Math.cos(angle);
+                    var sinA = Math.sin(angle);
+
+                    // Dot product with velocity direction = how aligned this point is
+                    var dot = cosA * nx + sinA * ny;
+                    // Cross product = perpendicular component
+                    var cross = Math.abs(-sinA * nx + cosA * ny);
+
+                    // Stretch in movement direction, squish perpendicular
+                    var r = radius + dot * stretch - cross * squish;
+                    r = Math.max(radius * 0.5, r);
+
+                    var x = cx + cosA * r;
+                    var y = cy + sinA * r;
+
+                    if (i === 0) { ctx.moveTo(x, y); }
+                    else {
+                        // Previous point for smooth curve
+                        var prevIdx = (idx - 1 + blobPoints) % blobPoints;
+                        var prevAngle = (prevIdx / blobPoints) * Math.PI * 2;
+                        var pCos = Math.cos(prevAngle), pSin = Math.sin(prevAngle);
+                        var pDot = pCos * nx + pSin * ny;
+                        var pCross = Math.abs(-pSin * nx + pCos * ny);
+                        var pR = radius + pDot * stretch - pCross * squish;
+                        pR = Math.max(radius * 0.5, pR);
+                        var px = cx + pCos * pR;
+                        var py = cy + pSin * pR;
+                        // Midpoint for quadratic smoothing
+                        var mx = (px + x) / 2;
+                        var my = (py + y) / 2;
+                        ctx.quadraticCurveTo(px, py, mx, my);
+                    }
                 }
                 ctx.closePath();
             }
@@ -993,63 +971,75 @@
                 if (!isAnimating) return;
 
                 // Smooth lerp
-                smoothX += (targetX - smoothX) * 0.08;
-                smoothY += (targetY - smoothY) * 0.08;
+                if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
+                smoothX += (targetX - smoothX) * 0.12;
+                smoothY += (targetY - smoothY) * 0.12;
 
-                // Calculate velocity (how fast cursor is moving)
-                velocityX = (smoothX - prevSmoothX) * 0.7 + velocityX * 0.3; // smooth velocity
-                velocityY = (smoothY - prevSmoothY) * 0.7 + velocityY * 0.3;
-                prevSmoothX = smoothX;
-                prevSmoothY = smoothY;
+                // Velocity
+                var vx = smoothX - prevX;
+                var vy = smoothY - prevY;
+                var speed = Math.sqrt(vx * vx + vy * vy);
 
-                // Decay velocity when still
-                velocityX *= 0.92;
-                velocityY *= 0.92;
+                // Add to trail only when moving enough
+                if (isActive && speed > 1.5) {
+                    trail.push({ x: smoothX, y: smoothY, vx: vx, vy: vy, age: 0, radius: blobRadius });
+                    if (trail.length > maxTrail) trail.shift();
+                }
+
+                // Age all trail points
+                for (var i = trail.length - 1; i >= 0; i--) {
+                    trail[i].age++;
+                    if (trail[i].age > trailLifetime) {
+                        trail.splice(i, 1);
+                    }
+                }
+
+                prevX = smoothX;
+                prevY = smoothY;
 
                 // Clear
                 ctx.clearRect(0, 0, W, H);
-
                 if (!imgReady) { requestAnimationFrame(animate); return; }
 
                 // Draw the normal (top) image covering the full canvas
                 var r = getCoverRect(topImg);
                 ctx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                // Only cut the blob if cursor is active/nearby
-                if (isActive || (smoothX > -300 && smoothX < W + 300)) {
+                // Cut out the liquid trail — each trail point is a blob that fades with age
+                if (trail.length > 0 || isActive) {
                     ctx.save();
-
-                    // Soft feathered edge — large soft gradient surrounding the blob
                     ctx.globalCompositeOperation = 'destination-out';
-                    var softGrad = ctx.createRadialGradient(
-                        smoothX, smoothY, blobRadius * 0.4,
-                        smoothX, smoothY, blobRadius * 1.8
-                    );
-                    softGrad.addColorStop(0, 'rgba(0,0,0,1)');
-                    softGrad.addColorStop(0.35, 'rgba(0,0,0,0.95)');
-                    softGrad.addColorStop(0.65, 'rgba(0,0,0,0.5)');
-                    softGrad.addColorStop(0.85, 'rgba(0,0,0,0.15)');
-                    softGrad.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.fillStyle = softGrad;
-                    var spread = blobRadius * 2.5;
-                    ctx.fillRect(smoothX - spread, smoothY - spread, spread * 2, spread * 2);
 
-                    // Liquid blob core — distorts based on mouse velocity
-                    ctx.fillStyle = 'rgba(0,0,0,1)';
-                    drawLiquidBlob(smoothX, smoothY, blobRadius, velocityX, velocityY);
-                    ctx.fill();
+                    // Draw trail blobs (older = smaller and more transparent)
+                    for (var i = 0; i < trail.length; i++) {
+                        var t = trail[i];
+                        var life = 1 - (t.age / trailLifetime); // 1 = fresh, 0 = about to die
+                        var alpha = life * life; // ease-out fade
+                        var rad = t.radius * (0.5 + life * 0.5); // shrink as it ages
+
+                        ctx.fillStyle = 'rgba(0,0,0,' + alpha.toFixed(3) + ')';
+                        drawLiquidBlob(t.x, t.y, rad, t.vx * life, t.vy * life, alpha);
+                        ctx.fill();
+                    }
+
+                    // Main cursor blob — always full size and fully opaque
+                    if (isActive && smoothX > -500) {
+                        ctx.fillStyle = 'rgba(0,0,0,1)';
+                        drawLiquidBlob(smoothX, smoothY, blobRadius, vx, vy, 1);
+                        ctx.fill();
+
+                        // Soft edge around main blob — very subtle feather, no glow
+                        var feather = ctx.createRadialGradient(
+                            smoothX, smoothY, blobRadius * 0.85,
+                            smoothX, smoothY, blobRadius * 1.25
+                        );
+                        feather.addColorStop(0, 'rgba(0,0,0,0.6)');
+                        feather.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = feather;
+                        ctx.fillRect(smoothX - blobRadius * 1.5, smoothY - blobRadius * 1.5, blobRadius * 3, blobRadius * 3);
+                    }
 
                     ctx.restore();
-                }
-
-                // Cursor glow
-                if (cursorGlow) {
-                    cursorGlow.style.left = smoothX + 'px';
-                    cursorGlow.style.top = smoothY + 'px';
-                }
-                if (edgeGlow) {
-                    edgeGlow.style.left = smoothX + 'px';
-                    edgeGlow.style.top = smoothY + 'px';
                 }
 
                 requestAnimationFrame(animate);
