@@ -1473,9 +1473,9 @@
         <!-- Two-layer reveal: base (rival) underneath, top (normal) visible, canvas cuts the liquid hole -->
         <div class="reveal-container" id="reveal-container">
             <!-- Rival version — always visible underneath -->
-            <img class="reveal-base" src="assets/hero-overlay.jpg" alt="Rival Mode" draggable="false">
+            <img class="reveal-base" src="assets/hero-overlay.png" alt="Rival Mode" draggable="false">
             <!-- Normal version — visible by default -->
-            <img class="reveal-top" id="reveal-top" src="assets/hero-base.png" alt="Normal" draggable="false">
+            <img class="reveal-top" id="reveal-top" src="assets/hero-base.jpg" alt="Normal" draggable="false">
             <!-- Canvas that draws the liquid mask hole -->
             <canvas class="liquid-mask-canvas" id="liquid-canvas"></canvas>
         </div>
@@ -1730,9 +1730,9 @@
             var mainSite = document.getElementById('main-site');
 
             var topImg = new Image();
-            topImg.src = 'assets/hero-base.png';
+            topImg.src = 'assets/hero-base.jpg';
             var baseImg = new Image();
-            baseImg.src = 'assets/hero-overlay.jpg';
+            baseImg.src = 'assets/hero-overlay.png';
 
             var W, H, dpr;
             var isAnimating = true;
