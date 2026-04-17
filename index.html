@@ -471,10 +471,32 @@
         }
         @keyframes hintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-        /* Text fade out when button pressed */
-        .hero-brand-text.fading, .hero-btn-wrap.fading, .touch-hint.fading {
+        /* Text fade out when button pressed — soft, fluid disappearance */
+        .hero-brand-text.fading {
             opacity: 0 !important;
-            transition: opacity 0.5s ease;
+            transform: translateY(-10px);
+            filter: blur(8px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none !important;
+        }
+        .hero-btn-wrap.fading {
+            opacity: 0 !important;
+            transform: translate(-50%, -50%) scale(0.92);
+            filter: blur(12px);
+            transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none !important;
+        }
+        .touch-hint.fading {
+            opacity: 0 !important;
+            transform: translateX(-50%) translateY(8px);
+            filter: blur(6px);
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none !important;
         }
 
@@ -488,21 +510,21 @@
             z-index: 15;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .hero-transition-video.playing {
             opacity: 1;
         }
         .interactive-hero.fading-out {
             opacity: 0;
-            transition: opacity 0.8s ease;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .interactive-hero.gone { display: none; }
 
         /* Main site hidden initially — fades in from pure black */
         .main-site {
             opacity: 0;
-            transition: opacity 1.5s ease;
+            transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .main-site.revealed { opacity: 1; }
 
@@ -1116,53 +1138,60 @@
             var touchHint = document.getElementById('touch-hint');
             var transVideo = document.getElementById('hero-transition-video');
 
-            enterBtn.addEventListener('click', function() {
-                // 1. Fade out text/buttons immediately
-                heroBrandText.classList.add('fading');
-                heroBtnWrap.classList.add('fading');
-                touchHint.classList.add('fading');
+            var transitionStarted = false;
 
-                // 2. After text fades, show and play the transition video
+            function revealArena() {
+                if (hero.classList.contains('gone')) return;
+                // Stop canvas animation now — video fully covers it
+                isAnimating = false;
+                hero.classList.add('fading-out');
+                // Start revealing main site slightly before hero fully gone (overlap)
                 setTimeout(function() {
-                    isAnimating = false;
+                    mainSite.classList.add('revealed');
+                    document.body.style.overflow = '';
+                    window.scrollTo(0, 0);
+                }, 400);
+                // Remove hero after fade completes
+                setTimeout(function() {
+                    hero.classList.add('gone');
+                }, 1300);
+            }
+
+            enterBtn.addEventListener('click', function() {
+                if (transitionStarted) return;
+                transitionStarted = true;
+
+                // 1. Staggered fade — button first, then text, then hint
+                heroBtnWrap.classList.add('fading');
+                setTimeout(function() { heroBrandText.classList.add('fading'); }, 100);
+                setTimeout(function() { touchHint.classList.add('fading'); }, 50);
+
+                // 2. Start video crossfade while canvas STILL runs underneath
+                //    The canvas stays alive so the last frame isn't frozen
+                setTimeout(function() {
                     transVideo.currentTime = 0;
                     transVideo.classList.add('playing');
                     transVideo.play().catch(function() {
-                        // If video fails (autoplay blocked), fall back to CSS fade
-                        hero.classList.add('fading-out');
-                        setTimeout(function() {
-                            mainSite.classList.add('revealed');
-                            document.body.style.overflow = '';
-                            window.scrollTo(0, 0);
-                            hero.classList.add('gone');
-                        }, 1000);
+                        // Autoplay blocked — fall back to smooth CSS fade
+                        revealArena();
                     });
 
-                    // 3. When video ends, fade hero out and reveal arena
+                    // 3. Once video is visually covering the canvas, we can stop later
+                    //    (canvas keeps running — video opacity transition covers it)
+
+                    // 4. When video ends, smoothly cross-fade to arena
                     transVideo.addEventListener('ended', function onEnd() {
                         transVideo.removeEventListener('ended', onEnd);
-                        hero.classList.add('fading-out');
-                        setTimeout(function() {
-                            mainSite.classList.add('revealed');
-                            document.body.style.overflow = '';
-                            window.scrollTo(0, 0);
-                            hero.classList.add('gone');
-                        }, 900);
+                        revealArena();
                     });
 
                     // Safety timeout — if video stalls, force transition after 10s
                     setTimeout(function() {
                         if (!hero.classList.contains('gone')) {
-                            hero.classList.add('fading-out');
-                            setTimeout(function() {
-                                mainSite.classList.add('revealed');
-                                document.body.style.overflow = '';
-                                window.scrollTo(0, 0);
-                                hero.classList.add('gone');
-                            }, 900);
+                            revealArena();
                         }
                     }, 10000);
-                }, 400);
+                }, 600);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
