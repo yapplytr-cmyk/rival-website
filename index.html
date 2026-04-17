@@ -1022,25 +1022,25 @@
 
             // Movement-driven liquid noise
             var noiseTime = 0;
-            var noiseSpeed = 0;       // current noise evolution speed — driven by movement
-            var noiseIntensity = 0;   // how much the edges distort — driven by movement
+            var noiseSpeed = 0;
+            var noiseIntensity = 0;
 
             function noise1D(x) {
-                // Smooth organic noise — fewer harmonics = rounder shapes
-                return Math.sin(x * 1.0) * 0.6
+                return Math.sin(x * 1.0) * 0.5
                      + Math.sin(x * 2.3 + 1.3) * 0.3
-                     + Math.sin(x * 3.8 + 2.7) * 0.1;
+                     + Math.sin(x * 3.8 + 2.7) * 0.2;
             }
 
-            // Draw organic liquid blob — fewer points = smoother, rounder form
+            // Smooth liquid waveform blob — always organic, never circular
             function stampBlob(cx, cy, radius) {
-                var points = 16; // fewer edges — smooth organic shape
+                var points = 24;
+                // Baseline waveform always visible (0.18), movement adds more (up to 0.35)
+                var distortion = 0.18 + noiseIntensity;
                 maskCtx.fillStyle = '#fff';
                 maskCtx.beginPath();
                 for (var i = 0; i <= points; i++) {
                     var angle = (i / points) * Math.PI * 2;
-                    // Distortion scales with noiseIntensity — still when idle, alive when moving
-                    var n = noise1D(angle * 2 + noiseTime) * noiseIntensity;
+                    var n = noise1D(angle * 2.5 + noiseTime) * distortion;
                     var r = radius * (1 + n);
                     var px = cx + Math.cos(angle) * r;
                     var py = cy + Math.sin(angle) * r;
@@ -1077,15 +1077,13 @@
                 var mx = smoothX - prevX, my = smoothY - prevY;
                 var cursorSpeed = Math.sqrt(mx * mx + my * my);
 
-                // Target noise speed & intensity based on movement
-                var targetNoiseSpeed = Math.min(cursorSpeed * 0.003, 0.04);
-                var targetNoiseIntensity = Math.min(cursorSpeed * 0.008, 0.25);
+                // Baseline: slow gentle breathing. Movement adds more speed + distortion
+                var targetNoiseSpeed = 0.008 + Math.min(cursorSpeed * 0.003, 0.035);
+                var targetNoiseIntensity = Math.min(cursorSpeed * 0.006, 0.17);
 
-                // Smoothly ramp up when moving, slowly decay when still
                 noiseSpeed += (targetNoiseSpeed - noiseSpeed) * 0.08;
                 noiseIntensity += (targetNoiseIntensity - noiseIntensity) * 0.06;
 
-                // Advance noise time — speed driven by movement, not constant
                 noiseTime += noiseSpeed;
 
                 // === DISSIPATION — fade mask so revealed areas return FULLY ===
