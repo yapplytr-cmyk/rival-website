@@ -1026,21 +1026,22 @@
             var noiseIntensity = 0;
 
             function noise1D(x) {
-                return Math.sin(x * 1.0) * 0.5
-                     + Math.sin(x * 2.3 + 1.3) * 0.3
-                     + Math.sin(x * 3.8 + 2.7) * 0.2;
+                return Math.sin(x * 0.8) * 0.4
+                     + Math.sin(x * 1.9 + 1.3) * 0.3
+                     + Math.sin(x * 3.2 + 2.7) * 0.2
+                     + Math.sin(x * 5.1 + 0.5) * 0.1;
             }
 
-            // Smooth liquid waveform blob — always organic, never circular
+            // Smooth liquid waveform blob — dramatic organic shape, never circular
             function stampBlob(cx, cy, radius) {
-                var points = 24;
-                // Baseline waveform always visible (0.18), movement adds more (up to 0.35)
-                var distortion = 0.18 + noiseIntensity;
+                var points = 28;
+                // Strong baseline waveform (0.25) — blob always looks liquid
+                var distortion = 0.25 + noiseIntensity;
                 maskCtx.fillStyle = '#fff';
                 maskCtx.beginPath();
                 for (var i = 0; i <= points; i++) {
                     var angle = (i / points) * Math.PI * 2;
-                    var n = noise1D(angle * 2.5 + noiseTime) * distortion;
+                    var n = noise1D(angle * 3 + noiseTime) * distortion;
                     var r = radius * (1 + n);
                     var px = cx + Math.cos(angle) * r;
                     var py = cy + Math.sin(angle) * r;
@@ -1086,13 +1087,18 @@
 
                 noiseTime += noiseSpeed;
 
-                // === DISSIPATION — fade mask so revealed areas return FULLY ===
+                // === DISSIPATION — multiply fade + flat subtract to kill lingering alpha ===
                 fadeCtx.save();
                 fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
                 fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalAlpha = DISSIPATION;
                 fadeCtx.drawImage(maskCanvas, 0, 0);
                 fadeCtx.globalAlpha = 1;
+                // Subtract a flat amount from alpha — kills low values to true zero
+                fadeCtx.globalCompositeOperation = 'destination-out';
+                fadeCtx.fillStyle = 'rgba(0,0,0,0.035)';
+                fadeCtx.fillRect(0, 0, W * dpr, H * dpr);
+                fadeCtx.globalCompositeOperation = 'source-over';
                 fadeCtx.restore();
 
                 maskCtx.save();
