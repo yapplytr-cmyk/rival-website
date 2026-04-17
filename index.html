@@ -682,17 +682,41 @@
             position: relative;
             overflow: hidden;
         }
-        /* Orange ambient glow behind avatars */
-        .arena-explain::before {
+        /* Dual ambient glows */
+        .arena-explain::before, .arena-explain::after {
             content: '';
             position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(255,149,0,0.12) 0%, transparent 70%);
+            border-radius: 50%;
             pointer-events: none;
             z-index: 0;
         }
+        .arena-explain::before {
+            top: 30%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(255,149,0,0.10) 0%, transparent 65%);
+            animation: glowPulse 4s ease-in-out infinite;
+        }
+        .arena-explain::after {
+            bottom: 10%; right: 15%;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255,120,0,0.06) 0%, transparent 70%);
+            animation: glowPulse 5s ease-in-out 1.5s infinite;
+        }
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+        }
+
+        /* Particle canvas for explain section */
+        .explain-particles {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
         .explain-content {
             max-width: 900px;
             text-align: center;
@@ -701,69 +725,126 @@
             z-index: 1;
         }
 
-        /* Avatar showcase — floating grid */
+        /* Avatar showcase — 3 avatars + VS badge, hero layout */
         .avatar-showcase {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 48px;
+            gap: 32px;
+            margin-bottom: 52px;
+            position: relative;
+            min-height: 160px;
         }
         .avatar-card {
-            width: 100px; height: 100px;
-            border-radius: 24px;
-            background: rgba(255,149,0,0.06);
-            border: 1px solid rgba(255,149,0,0.15);
+            width: 130px; height: 130px;
+            border-radius: 32px;
+            background: rgba(255,149,0,0.04);
+            border: 1px solid rgba(255,149,0,0.12);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 12px;
+            padding: 16px;
+            position: relative;
             opacity: 0;
-            transform: translateY(30px) scale(0.8);
-            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            transform: translateY(40px) scale(0.7);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
+        /* Glow ring behind each avatar */
+        .avatar-card::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 34px;
+            background: linear-gradient(135deg, rgba(255,149,0,0.3), rgba(255,80,0,0.1), transparent, rgba(255,149,0,0.2));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        .explain-content.visible .avatar-card::before { opacity: 1; }
+        /* Outer glow pulse ring */
+        .avatar-card::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 40px;
+            border: 1px solid rgba(255,149,0,0.08);
+            animation: ringPulse 3s ease-in-out infinite;
+            opacity: 0;
+            transition: opacity 0.8s ease 0.5s;
+        }
+        .explain-content.visible .avatar-card::after { opacity: 1; }
+        .avatar-card:nth-child(1)::after { animation-delay: 0s; }
+        .avatar-card:nth-child(2)::after { animation-delay: 1s; }
+        .avatar-card:nth-child(4)::after { animation-delay: 2s; }
+        @keyframes ringPulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; border-color: rgba(255,149,0,0.08); }
+            50% { transform: scale(1.08); opacity: 1; border-color: rgba(255,149,0,0.2); }
+        }
+
         .avatar-card:hover {
-            transform: translateY(-8px) scale(1.1) !important;
+            transform: translateY(-10px) scale(1.08) !important;
             border-color: rgba(255,149,0,0.5);
-            background: rgba(255,149,0,0.12);
-            box-shadow: 0 12px 40px rgba(255,149,0,0.2);
+            background: rgba(255,149,0,0.1);
+            box-shadow: 0 20px 60px rgba(255,149,0,0.25), 0 0 80px rgba(255,149,0,0.1);
         }
         .avatar-card img {
             width: 100%; height: 100%;
             object-fit: contain;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 6px 20px rgba(0,0,0,0.6));
         }
-        /* Stagger avatar entries (positions 1-4 are avatar-cards, 5 is VS badge, 6-9 are avatar-cards) */
-        .explain-content.visible .avatar-card:nth-child(1) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0s; }
-        .explain-content.visible .avatar-card:nth-child(2) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.08s; }
-        .explain-content.visible .avatar-card:nth-child(3) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.16s; }
-        .explain-content.visible .avatar-card:nth-child(4) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.24s; }
-        .explain-content.visible .avatar-card:nth-child(6) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.40s; }
-        .explain-content.visible .avatar-card:nth-child(7) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.48s; }
-        .explain-content.visible .avatar-card:nth-child(8) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.56s; }
-        .explain-content.visible .avatar-card:nth-child(9) { opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.64s; }
+        /* Floating animation per avatar */
+        @keyframes floatA { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.02); } }
+        @keyframes floatB { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.01); } }
+        @keyframes floatC { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-14px) scale(1.03); } }
+        .explain-content.visible .avatar-card:nth-child(1) {
+            opacity: 1; transform: translateY(0) scale(1); transition-delay: 0s;
+            animation: floatA 4s ease-in-out 1s infinite;
+        }
+        .explain-content.visible .avatar-card:nth-child(2) {
+            opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.15s;
+            animation: floatB 5s ease-in-out 1.3s infinite;
+        }
+        .explain-content.visible .avatar-card:nth-child(4) {
+            opacity: 1; transform: translateY(0) scale(1); transition-delay: 0.3s;
+            animation: floatC 4.5s ease-in-out 1.6s infinite;
+        }
 
-        /* VS badge — floating between avatars */
+        /* VS badge — glowing center piece */
         .vs-badge {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 52px; height: 52px;
+            width: 60px; height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #FF8C00, #FF9500);
+            background: linear-gradient(135deg, #E67E00, #FF9500, #FFB340);
             font-family: var(--font);
-            font-size: 14px;
-            font-weight: 800;
+            font-size: 16px;
+            font-weight: 900;
             color: #000;
-            letter-spacing: 1px;
-            box-shadow: 0 0 30px rgba(255,149,0,0.4);
+            letter-spacing: 2px;
+            box-shadow: 0 0 40px rgba(255,149,0,0.5), 0 0 80px rgba(255,149,0,0.15);
             opacity: 0;
-            transform: scale(0);
-            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            transform: scale(0) rotate(-180deg);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
             flex-shrink: 0;
+            position: relative;
+            z-index: 2;
         }
-        .explain-content.visible .vs-badge { opacity: 1; transform: scale(1); transition-delay: 0.3s; }
+        .vs-badge::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,149,0,0.2);
+            animation: vsPulse 2s ease-in-out infinite;
+        }
+        @keyframes vsPulse {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.25); opacity: 0; }
+        }
+        .explain-content.visible .vs-badge {
+            opacity: 1; transform: scale(1) rotate(0deg); transition-delay: 0.2s;
+        }
 
         .explain-label {
             font-family: var(--font);
@@ -802,9 +883,9 @@
             transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
-        .explain-content.visible .explain-label { opacity: 1; transform: translateY(0); transition-delay: 0.6s; }
-        .explain-content.visible .explain-title { opacity: 1; transform: translateY(0); transition-delay: 0.7s; }
-        .explain-content.visible .explain-text { opacity: 1; transform: translateY(0); transition-delay: 0.85s; }
+        .explain-content.visible .explain-label { opacity: 1; transform: translateY(0); transition-delay: 0.5s; }
+        .explain-content.visible .explain-title { opacity: 1; transform: translateY(0); transition-delay: 0.6s; }
+        .explain-content.visible .explain-text { opacity: 1; transform: translateY(0); transition-delay: 0.75s; }
 
         /* Rank tier row */
         .rank-row {
@@ -817,7 +898,7 @@
             transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
-        .explain-content.visible .rank-row { opacity: 1; transform: translateY(0); transition-delay: 1.0s; }
+        .explain-content.visible .rank-row { opacity: 1; transform: translateY(0); transition-delay: 0.9s; }
         .rank-item {
             text-align: center;
         }
@@ -838,10 +919,10 @@
         }
 
         /* Feature pills — orange theme */
-        .explain-content.visible .arena-pill:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 1.1s; }
-        .explain-content.visible .arena-pill:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 1.2s; }
-        .explain-content.visible .arena-pill:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 1.3s; }
-        .explain-content.visible .arena-pill:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 1.4s; }
+        .explain-content.visible .arena-pill:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 1.0s; }
+        .explain-content.visible .arena-pill:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 1.1s; }
+        .explain-content.visible .arena-pill:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 1.2s; }
+        .explain-content.visible .arena-pill:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 1.3s; }
         .arena-explain .arena-pill {
             border-color: rgba(255,149,0,0.15);
             background: rgba(255,149,0,0.04);
@@ -900,9 +981,9 @@
             .arena-pill { padding: 8px 14px; font-size: 12px; }
             .arena-pill svg { width: 14px; height: 14px; }
             .arena-download-btn { padding: 14px 32px; font-size: 14px; }
-            .avatar-showcase { gap: 12px; }
-            .avatar-card { width: 72px; height: 72px; border-radius: 18px; padding: 8px; }
-            .vs-badge { width: 40px; height: 40px; font-size: 11px; }
+            .avatar-showcase { gap: 16px; }
+            .avatar-card { width: 90px; height: 90px; border-radius: 24px; padding: 12px; }
+            .vs-badge { width: 44px; height: 44px; font-size: 13px; }
             .rank-item img { width: 36px; height: 36px; }
             .rank-row { gap: 10px; }
             .rank-item .rank-name { font-size: 8px; }
@@ -1012,19 +1093,15 @@
 
         <!-- SCREEN 2: Explanation section -->
         <div class="arena-page arena-explain" id="arena-explain">
+            <canvas class="explain-particles" id="explain-particles"></canvas>
             <div class="explain-content">
 
-                <!-- Avatar showcase grid with VS badge -->
+                <!-- Avatar showcase — 3 avatars + VS badge -->
                 <div class="avatar-showcase">
                     <div class="avatar-card"><img src="assets/cat-devil.png" alt="Devil"></div>
                     <div class="avatar-card"><img src="assets/cat-cyber.png" alt="Cyber"></div>
-                    <div class="avatar-card"><img src="assets/cat-ninja.png" alt="Ninja"></div>
-                    <div class="avatar-card"><img src="assets/cat-king.png" alt="King"></div>
                     <div class="vs-badge">VS</div>
-                    <div class="avatar-card"><img src="assets/cat-dj.png" alt="DJ"></div>
-                    <div class="avatar-card"><img src="assets/cat-explorer.png" alt="Explorer"></div>
-                    <div class="avatar-card"><img src="assets/cat-grumpy.png" alt="Grumpy"></div>
-                    <div class="avatar-card"><img src="assets/cat-wink.png" alt="Wink"></div>
+                    <div class="avatar-card"><img src="assets/cat-ninja.png" alt="Ninja"></div>
                 </div>
 
                 <div class="explain-label">Welcome to Rival</div>
@@ -1446,6 +1523,71 @@
                 }, { threshold: 0.2 });
                 obs.observe(explainContent);
             }
+        })();
+
+        // ========== EXPLAIN SECTION PARTICLES (ORANGE) ==========
+        (function() {
+            var ec = document.getElementById('explain-particles');
+            if (!ec) return;
+            var ectx = ec.getContext('2d');
+            var eparticles = [];
+            var eCount = 40;
+
+            function resizeEP() {
+                var rect = ec.parentElement.getBoundingClientRect();
+                ec.width = rect.width;
+                ec.height = rect.height;
+            }
+            resizeEP();
+            window.addEventListener('resize', resizeEP);
+
+            for (var i = 0; i < eCount; i++) {
+                var type = Math.random();
+                eparticles.push({
+                    x: Math.random() * 1600,
+                    y: Math.random() * 1000,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: type < 0.3 ? (1 + Math.random() * 1.5) : (2 + Math.random() * 3),
+                    alpha: type < 0.3 ? (0.15 + Math.random() * 0.2) : (0.05 + Math.random() * 0.12),
+                    pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.008 + Math.random() * 0.02,
+                    hue: 25 + Math.random() * 20 // orange range
+                });
+            }
+
+            function animateEP() {
+                ectx.clearRect(0, 0, ec.width, ec.height);
+                for (var i = 0; i < eparticles.length; i++) {
+                    var p = eparticles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.pulse += p.pulseSpeed;
+                    var a = p.alpha * (0.4 + 0.6 * Math.sin(p.pulse));
+
+                    if (p.x < -20) p.x = ec.width + 20;
+                    if (p.x > ec.width + 20) p.x = -20;
+                    if (p.y < -20) p.y = ec.height + 20;
+                    if (p.y > ec.height + 20) p.y = -20;
+
+                    // Draw glowing dot
+                    var grad = ectx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
+                    grad.addColorStop(0, 'hsla(' + p.hue + ', 100%, 55%, ' + a.toFixed(3) + ')');
+                    grad.addColorStop(1, 'hsla(' + p.hue + ', 100%, 55%, 0)');
+                    ectx.beginPath();
+                    ectx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+                    ectx.fillStyle = grad;
+                    ectx.fill();
+
+                    // Core dot
+                    ectx.beginPath();
+                    ectx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+                    ectx.fillStyle = 'hsla(' + p.hue + ', 100%, 70%, ' + (a * 1.5).toFixed(3) + ')';
+                    ectx.fill();
+                }
+                requestAnimationFrame(animateEP);
+            }
+            animateEP();
         })();
 
         // ========== ARENA PARTICLE ANIMATION ==========
