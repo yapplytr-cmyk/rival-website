@@ -365,15 +365,16 @@
             z-index: 1;
         }
 
-        /* Top = normal version (black hoodie) — gets masked to reveal base */
-        .reveal-top {
+        /* Top image hidden — canvas draws it instead with liquid hole */
+        .reveal-top { display: none; }
+
+        /* Canvas replaces the top layer — draws normal image with liquid blob cutout */
+        .liquid-mask-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 2;
-            /* mask is set dynamically by JS — starts fully visible */
-            -webkit-mask-image: radial-gradient(circle 0px at 50% 50%, transparent 0%, transparent 100%);
-            mask-image: radial-gradient(circle 0px at 50% 50%, transparent 0%, transparent 100%);
-            -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
-            will-change: mask-image, -webkit-mask-image;
+            pointer-events: none;
         }
 
         /* Custom cursor glow that follows mouse */
@@ -558,12 +559,24 @@
 
     <!-- ========== INTERACTIVE HERO — LIQUID MASK REVEAL ========== -->
     <section class="interactive-hero" id="interactive-hero">
-        <!-- Two-layer reveal: base (rival) underneath, top (normal) gets masked -->
+        <!-- SVG filter for liquid distortion -->
+        <svg style="position:absolute;width:0;height:0;">
+            <defs>
+                <filter id="liquid-filter">
+                    <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.015" numOctaves="3" seed="2" result="turbulence"/>
+                    <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="30" xChannelSelector="R" yChannelSelector="G"/>
+                </filter>
+            </defs>
+        </svg>
+
+        <!-- Two-layer reveal: base (rival) underneath, top (normal) visible, canvas cuts the liquid hole -->
         <div class="reveal-container" id="reveal-container">
             <!-- Rival version — always visible underneath -->
             <img class="reveal-base" src="assets/hero-overlay.jpg" alt="Rival Mode" draggable="false">
-            <!-- Normal version — masked by cursor to reveal rival underneath -->
+            <!-- Normal version — visible by default -->
             <img class="reveal-top" id="reveal-top" src="assets/hero-base.jpg" alt="Normal" draggable="false">
+            <!-- Canvas that draws the liquid mask hole -->
+            <canvas class="liquid-mask-canvas" id="liquid-canvas"></canvas>
         </div>
 
         <!-- Cursor glow effect -->
@@ -852,101 +865,174 @@
     </div><!-- end .main-site -->
 
     <script>
-        // ========== INTERACTIVE HERO — LIQUID MASK REVEAL ==========
+        // ========== INTERACTIVE HERO — LIQUID BLOB MASK REVEAL ==========
         (function() {
             var hero = document.getElementById('interactive-hero');
-            var revealTop = document.getElementById('reveal-top');
+            var canvas = document.getElementById('liquid-canvas');
+            var ctx = canvas.getContext('2d');
             var cursorGlow = document.getElementById('cursor-glow');
             var edgeGlow = document.getElementById('reveal-edge-glow');
             var enterBtn = document.getElementById('enter-arena-btn');
             var mainSite = document.getElementById('main-site');
 
-            // Smooth cursor state
-            var targetX = 50, targetY = 50; // % position
-            var currentMaskX = 50, currentMaskY = 50;
-            var cursorPixelX = window.innerWidth / 2;
-            var cursorPixelY = window.innerHeight / 2;
+            // Preload the normal (top) image for canvas drawing
+            var topImg = new Image();
+            topImg.src = 'assets/hero-base.jpg';
+
+            var W, H, dpr;
+            var targetX = -500, targetY = -500;
+            var smoothX = -500, smoothY = -500;
             var isAnimating = true;
-            var isTouch = false;
-            var maskRadius = 150; // px radius of the reveal circle
+            var isActive = false;
+            var blobRadius = 130;
+            var time = 0;
+            var imgReady = false;
 
-            // Mouse move — update target position
+            topImg.onload = function() { imgReady = true; };
+
+            // Blob organic wobble points
+            var blobPoints = 14;
+            var blobNoise = [];
+            for (var i = 0; i < blobPoints; i++) {
+                blobNoise.push({
+                    phase: Math.random() * Math.PI * 2,
+                    speed: 0.6 + Math.random() * 1.2,
+                    amp: 0.1 + Math.random() * 0.18
+                });
+            }
+
+            function resize() {
+                dpr = window.devicePixelRatio || 1;
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = W * dpr;
+                canvas.height = H * dpr;
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Calculate cover-fit draw params (same as CSS object-fit: cover, centered)
+            function getCoverRect(img) {
+                var iw = img.naturalWidth, ih = img.naturalHeight;
+                var scale = Math.max(W / iw, H / ih);
+                var dw = iw * scale, dh = ih * scale;
+                return { x: (W - dw) / 2, y: (H - dh) / 2, w: dw, h: dh };
+            }
+
+            // Input
             hero.addEventListener('mousemove', function(e) {
-                targetX = (e.clientX / window.innerWidth) * 100;
-                targetY = (e.clientY / window.innerHeight) * 100;
-                cursorPixelX = e.clientX;
-                cursorPixelY = e.clientY;
+                targetX = e.clientX; targetY = e.clientY; isActive = true;
             });
-
-            // Touch move — same thing
             hero.addEventListener('touchmove', function(e) {
                 if (e.touches.length > 0) {
-                    var t = e.touches[0];
-                    targetX = (t.clientX / window.innerWidth) * 100;
-                    targetY = (t.clientY / window.innerHeight) * 100;
-                    cursorPixelX = t.clientX;
-                    cursorPixelY = t.clientY;
-                    isTouch = true;
-                    e.preventDefault();
+                    targetX = e.touches[0].clientX; targetY = e.touches[0].clientY;
+                    isActive = true; e.preventDefault();
                 }
             }, { passive: false });
-
             hero.addEventListener('touchstart', function(e) {
                 if (e.touches.length > 0) {
-                    var t = e.touches[0];
-                    targetX = (t.clientX / window.innerWidth) * 100;
-                    targetY = (t.clientY / window.innerHeight) * 100;
-                    cursorPixelX = t.clientX;
-                    cursorPixelY = t.clientY;
-                    isTouch = true;
+                    targetX = e.touches[0].clientX; targetY = e.touches[0].clientY;
+                    isActive = true;
                 }
             }, { passive: true });
-
-            // Reset mask when mouse leaves (desktop only)
-            hero.addEventListener('mouseleave', function() {
-                if (!isTouch) {
-                    targetX = -200; // move off screen to hide reveal
-                    targetY = -200;
-                }
-            });
-
+            hero.addEventListener('mouseleave', function() { isActive = false; });
             hero.addEventListener('mouseenter', function(e) {
-                targetX = (e.clientX / window.innerWidth) * 100;
-                targetY = (e.clientY / window.innerHeight) * 100;
+                targetX = e.clientX; targetY = e.clientY; isActive = true;
             });
 
-            // Animation loop — smooth lerp + mask update
+            // Draw the liquid blob path with organic wobbling edges
+            function drawLiquidBlob(cx, cy, radius, t) {
+                var points = [];
+                for (var i = 0; i < blobPoints; i++) {
+                    var angle = (i / blobPoints) * Math.PI * 2;
+                    var n = blobNoise[i];
+                    var wobble = 1 + Math.sin(t * n.speed + n.phase) * n.amp
+                                   + Math.sin(t * n.speed * 1.7 + n.phase * 2.3) * n.amp * 0.5
+                                   + Math.cos(t * n.speed * 0.6 + n.phase * 0.7) * n.amp * 0.3;
+                    var r = radius * wobble;
+                    points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+                }
+                // Draw smooth closed curve through points using catmull-rom -> bezier
+                ctx.beginPath();
+                for (var i = 0; i < points.length; i++) {
+                    var p0 = points[(i - 1 + points.length) % points.length];
+                    var p1 = points[i];
+                    var p2 = points[(i + 1) % points.length];
+                    var p3 = points[(i + 2) % points.length];
+                    if (i === 0) ctx.moveTo(p1.x, p1.y);
+                    // Catmull-Rom to cubic bezier
+                    var cp1x = p1.x + (p2.x - p0.x) / 6;
+                    var cp1y = p1.y + (p2.y - p0.y) / 6;
+                    var cp2x = p2.x - (p3.x - p1.x) / 6;
+                    var cp2y = p2.y - (p3.y - p1.y) / 6;
+                    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+                }
+                ctx.closePath();
+            }
+
             function animate() {
                 if (!isAnimating) return;
+                time += 0.02;
 
-                // Lerp toward target
-                currentMaskX += (targetX - currentMaskX) * 0.1;
-                currentMaskY += (targetY - currentMaskY) * 0.1;
+                // Smooth lerp
+                smoothX += (targetX - smoothX) * 0.08;
+                smoothY += (targetY - smoothY) * 0.08;
 
-                // Update CSS mask — transparent circle at cursor reveals base underneath
-                var mask = 'radial-gradient(circle ' + maskRadius + 'px at ' +
-                    currentMaskX.toFixed(2) + '% ' + currentMaskY.toFixed(2) + '%, ' +
-                    'transparent 0%, transparent 60%, rgba(0,0,0,0.4) 75%, black 100%)';
-                revealTop.style.webkitMaskImage = mask;
-                revealTop.style.maskImage = mask;
+                // Clear
+                ctx.clearRect(0, 0, W, H);
 
-                // Move cursor glow & edge glow
-                var lerpPixelX = cursorPixelX;
-                var lerpPixelY = cursorPixelY;
-                cursorGlow.style.left = lerpPixelX + 'px';
-                cursorGlow.style.top = lerpPixelY + 'px';
-                edgeGlow.style.left = lerpPixelX + 'px';
-                edgeGlow.style.top = lerpPixelY + 'px';
+                if (!imgReady) { requestAnimationFrame(animate); return; }
+
+                // Draw the normal (top) image covering the full canvas
+                var r = getCoverRect(topImg);
+                ctx.drawImage(topImg, r.x, r.y, r.w, r.h);
+
+                // Only cut the blob if cursor is active/nearby
+                if (isActive || (smoothX > -200 && smoothX < W + 200)) {
+                    ctx.save();
+
+                    // Soft feathered edge — use radial gradient to erase a soft ring
+                    ctx.globalCompositeOperation = 'destination-out';
+                    var softGrad = ctx.createRadialGradient(
+                        smoothX, smoothY, blobRadius * 0.5,
+                        smoothX, smoothY, blobRadius * 1.7
+                    );
+                    softGrad.addColorStop(0, 'rgba(0,0,0,1)');
+                    softGrad.addColorStop(0.4, 'rgba(0,0,0,0.95)');
+                    softGrad.addColorStop(0.7, 'rgba(0,0,0,0.4)');
+                    softGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = softGrad;
+                    ctx.fillRect(smoothX - blobRadius * 2, smoothY - blobRadius * 2, blobRadius * 4, blobRadius * 4);
+
+                    // Sharp liquid blob core cutout
+                    ctx.fillStyle = 'rgba(0,0,0,1)';
+                    drawLiquidBlob(smoothX, smoothY, blobRadius, time);
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+
+                // Cursor glow
+                if (cursorGlow) {
+                    cursorGlow.style.left = smoothX + 'px';
+                    cursorGlow.style.top = smoothY + 'px';
+                }
+                if (edgeGlow) {
+                    edgeGlow.style.left = smoothX + 'px';
+                    edgeGlow.style.top = smoothY + 'px';
+                }
 
                 requestAnimationFrame(animate);
             }
             animate();
 
-            // ENTER BUTTON — transition to main site
+            // ENTER BUTTON
             enterBtn.addEventListener('click', function() {
                 isAnimating = false;
                 hero.classList.add('exiting');
-
                 setTimeout(function() {
                     hero.classList.add('gone');
                     mainSite.classList.add('revealed');
@@ -955,11 +1041,9 @@
                 }, 1400);
             });
 
-            // Restore cursor on button hover
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
             enterBtn.addEventListener('mouseleave', function() { hero.style.cursor = 'none'; });
 
-            // Prevent scrolling while hero is visible
             document.body.style.overflow = 'hidden';
         })();
 
