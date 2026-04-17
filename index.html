@@ -948,9 +948,8 @@
             var prevX = -999, prevY = -999;
             var isActive = false;
 
-            // Fluid dissipation — mask fades back so revealed areas return to original
-            var DISSIPATION = 0.965;
-            var MOUSE_FORCE = 1.0;
+            // Dissipation — aggressive so opacity fully resets
+            var DISSIPATION = 0.94;
 
             // All canvases at full DPR for retina sharpness
             var maskCanvas = document.createElement('canvas');
@@ -1019,69 +1018,71 @@
                 isActive = true;
             });
 
-            // ========== SOFT BRUSH STROKE — radial gradient stamp ==========
-            // Pre-render brush tip as offscreen canvas for speed
-            var brushTip = document.createElement('canvas');
-            var brushTipCtx = brushTip.getContext('2d');
-            var brushSize = 0;
+            // ========== DIRECTIONAL BRUSH STROKE ==========
+            // Draws an elongated ellipse stretched in the direction of movement
 
-            function buildBrushTip(size) {
-                brushSize = size;
-                var px = Math.ceil(size * 2 * dpr);
-                brushTip.width = px;
-                brushTip.height = px;
-                var c = px / 2;
-                var grad = brushTipCtx.createRadialGradient(c, c, 0, c, c, c);
-                // Tight solid core with a refined soft falloff
+            function stampBrush(cx, cy, size, angle, stretch) {
+                // Draw an elliptical soft brush — stretched along movement direction
+                var rx = size;
+                var ry = size * (0.45 + stretch * 0.55); // rounder when slow, elongated when fast
+                maskCtx.save();
+                maskCtx.translate(cx, cy);
+                maskCtx.rotate(angle);
+                // Radial gradient for soft edges
+                var grad = maskCtx.createRadialGradient(0, 0, 0, 0, 0, rx);
                 grad.addColorStop(0, 'rgba(255,255,255,1)');
-                grad.addColorStop(0.4, 'rgba(255,255,255,0.9)');
-                grad.addColorStop(0.7, 'rgba(255,255,255,0.3)');
-                grad.addColorStop(0.9, 'rgba(255,255,255,0.05)');
+                grad.addColorStop(0.5, 'rgba(255,255,255,0.95)');
+                grad.addColorStop(0.75, 'rgba(255,255,255,0.5)');
+                grad.addColorStop(0.92, 'rgba(255,255,255,0.08)');
                 grad.addColorStop(1, 'rgba(255,255,255,0)');
-                brushTipCtx.fillStyle = grad;
-                brushTipCtx.fillRect(0, 0, px, px);
+                maskCtx.fillStyle = grad;
+                maskCtx.scale(1, ry / rx);
+                maskCtx.beginPath();
+                maskCtx.arc(0, 0, rx, 0, Math.PI * 2);
+                maskCtx.fill();
+                maskCtx.restore();
             }
 
-            function stampBrush(cx, cy, size) {
-                if (Math.abs(size - brushSize) > 2) buildBrushTip(size);
-                var drawSize = size * 2;
-                maskCtx.drawImage(brushTip, cx - drawSize, cy - drawSize, drawSize * 2, drawSize * 2);
-            }
-
-            // Paint brush along cursor path — tight spacing for smooth continuous stroke
-            function paintStroke(x1, y1, x2, y2, size) {
+            // Paint brush along cursor path
+            function paintStroke(x1, y1, x2, y2, size, angle, stretch) {
                 var dx = x2 - x1, dy = y2 - y1;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                var spacing = size * 0.15;
+                var spacing = size * 0.12;
                 var steps = Math.max(1, Math.ceil(dist / spacing));
                 for (var i = 0; i <= steps; i++) {
                     var t = i / steps;
-                    stampBrush(x1 + dx * t, y1 + dy * t, size);
+                    stampBrush(x1 + dx * t, y1 + dy * t, size, angle, stretch);
                 }
             }
 
-            // Dissolve state for smooth fade-out on Enter
+            // Dissolve state
             var dissolveActive = false;
-            var dissolveFactor = 1; // 1 = full mask, fades to 0
+            var dissolveFactor = 1;
+
+            // Preload video — seek to frame 0 so first frame is decoded and ready
+            var transVideo = document.getElementById('hero-transition-video');
+            var videoReady = false;
+            transVideo.addEventListener('canplaythrough', function() { videoReady = true; });
+            transVideo.load();
 
             function animate() {
                 if (!isAnimating) return;
 
-                // Smooth cursor
+                // Smooth cursor — fluid trailing
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.12;
-                smoothY += (targetY - smoothY) * 0.12;
+                smoothX += (targetX - smoothX) * 0.13;
+                smoothY += (targetY - smoothY) * 0.13;
 
-                // === DISSIPATION — mask fades back so strokes aren't permanent ===
+                // === DISSIPATION ===
                 fadeCtx.save();
                 fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
                 fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalAlpha = dissolveActive ? dissolveFactor : DISSIPATION;
                 fadeCtx.drawImage(maskCanvas, 0, 0);
                 fadeCtx.globalAlpha = 1;
-                // Flat subtract to kill lingering near-zero alpha
+                // Flat subtract — aggressively kills low alpha to true zero
                 fadeCtx.globalCompositeOperation = 'destination-out';
-                fadeCtx.fillStyle = 'rgba(0,0,0,0.03)';
+                fadeCtx.fillStyle = 'rgba(0,0,0,0.06)';
                 fadeCtx.fillRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalCompositeOperation = 'source-over';
                 fadeCtx.restore();
@@ -1092,28 +1093,30 @@
                 maskCtx.drawImage(fadeCanvas, 0, 0);
                 maskCtx.restore();
 
-                // === DISSOLVE — smoothly fade the entire mask to zero ===
+                // === DISSOLVE on Enter ===
                 if (dissolveActive) {
-                    dissolveFactor *= 0.93;
-                    if (dissolveFactor < 0.01) {
+                    dissolveFactor *= 0.91;
+                    if (dissolveFactor < 0.005) {
                         dissolveFactor = 0;
-                        // Mask is fully gone — start video
-                        startVideoTransition();
                         dissolveActive = false;
+                        startVideoInstant();
                     }
                 }
 
-                // === PAINT — small refined brush stroke at cursor ===
+                // === PAINT — directional brush stroke ===
                 if (isActive && !dissolveActive && smoothX > -500 && prevX > -500) {
                     var dx = smoothX - prevX, dy = smoothY - prevY;
                     var speed = Math.sqrt(dx * dx + dy * dy);
-                    // Subtle dynamic sizing — slightly bigger when fast
-                    var dynSize = blobRadius * (1 + Math.min(speed / 50, 0.35));
+                    var angle = Math.atan2(dy, dx);
+                    // Stretch: 0 = round (idle), 1 = very elongated (fast)
+                    var stretch = Math.min(speed / 40, 1);
+                    // Brush gets slightly larger with speed
+                    var dynSize = blobRadius * (1 + Math.min(speed / 60, 0.3));
 
                     if (speed > 0.3) {
-                        paintStroke(prevX, prevY, smoothX, smoothY, dynSize);
+                        paintStroke(prevX, prevY, smoothX, smoothY, dynSize, angle, stretch);
                     }
-                    stampBrush(smoothX, smoothY, dynSize);
+                    stampBrush(smoothX, smoothY, dynSize, angle, stretch);
                 }
 
                 prevX = smoothX;
@@ -1125,10 +1128,8 @@
 
                 var r = getCoverRect(topImg);
 
-                // Base (rival) image — revealed underneath
                 ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                // Top image with mask punched through
                 offCtx.clearRect(0, 0, W, H);
                 offCtx.globalCompositeOperation = 'source-over';
                 offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
@@ -1144,20 +1145,19 @@
 
                 requestAnimationFrame(animate);
             }
-
-            // Build initial brush tip and start
-            buildBrushTip(blobRadius);
             animate();
 
-            // ========== ENTER BUTTON — smooth dissolve then seamless video ==========
+            // ========== ENTER — dissolve strokes, then instant video ==========
             var heroBrandText = document.getElementById('hero-brand-text');
             var heroBtnWrap = document.getElementById('hero-btn-wrap');
             var touchHint = document.getElementById('touch-hint');
-            var transVideo = document.getElementById('hero-transition-video');
 
             var transitionStarted = false;
 
-            function startVideoTransition() {
+            function startVideoInstant() {
+                // Video first frame is already decoded (preloaded)
+                // Canvas is showing hero-base.jpg with no mask = identical to video frame 1
+                // Instant switch — no fade, no transition, seamless
                 transVideo.currentTime = 0;
                 transVideo.classList.add('playing');
                 transVideo.play().catch(function() {
@@ -1190,12 +1190,12 @@
                 if (transitionStarted) return;
                 transitionStarted = true;
 
-                // 1. Fade out UI elements
+                // Fade out UI
                 heroBtnWrap.classList.add('fading');
                 setTimeout(function() { heroBrandText.classList.add('fading'); }, 100);
                 setTimeout(function() { touchHint.classList.add('fading'); }, 50);
 
-                // 2. Stop new brush strokes, start smooth dissolve of existing strokes
+                // Stop painting, start dissolve
                 setTimeout(function() {
                     isActive = false;
                     dissolveActive = true;
