@@ -939,9 +939,7 @@
             var fadeCanvas = document.createElement('canvas');
             var fadeCtx = fadeCanvas.getContext('2d');
 
-            // Blurred mask canvas — softened copy for compositing
-            var blurCanvas = document.createElement('canvas');
-            var blurCtx = blurCanvas.getContext('2d');
+            // (blur canvas removed — no feathering)
 
             // Offscreen canvas for compositing
             var offCanvas = document.createElement('canvas');
@@ -963,10 +961,7 @@
                 maskCanvas.height = H;
                 fadeCanvas.width = W;
                 fadeCanvas.height = H;
-                // Blur + off canvases at DPR for crisp final output
-                blurCanvas.width = W * dpr;
-                blurCanvas.height = H * dpr;
-                blurCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                // Off canvas at DPR for crisp final output
                 offCanvas.width = W * dpr;
                 offCanvas.height = H * dpr;
                 offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1007,42 +1002,61 @@
                 isActive = true;
             });
 
-            // Stamp a radial gradient circle (mimics fluid external force)
-            function stampGradient(cx, cy, radius, alpha) {
-                var grad = maskCtx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                grad.addColorStop(0, 'rgba(255,255,255,' + alpha + ')');
-                grad.addColorStop(0.4, 'rgba(255,255,255,' + (alpha * 0.8) + ')');
-                grad.addColorStop(0.7, 'rgba(255,255,255,' + (alpha * 0.35) + ')');
-                grad.addColorStop(1, 'rgba(255,255,255,0)');
-                maskCtx.fillStyle = grad;
+            // Noise seed for organic waveform edges
+            var noiseTime = 0;
+            function noise1D(x) {
+                // Simple smooth noise using layered sines
+                return Math.sin(x * 1.2) * 0.5
+                     + Math.sin(x * 2.7 + 1.3) * 0.25
+                     + Math.sin(x * 4.1 + 2.7) * 0.15
+                     + Math.sin(x * 7.3 + 0.8) * 0.1;
+            }
+
+            // Draw organic wobbly blob — solid white, no feathering
+            function stampBlob(cx, cy, radius) {
+                var points = 40;
+                maskCtx.fillStyle = '#fff';
                 maskCtx.beginPath();
-                maskCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+                for (var i = 0; i <= points; i++) {
+                    var angle = (i / points) * Math.PI * 2;
+                    // Waveform: distort radius using noise based on angle + time
+                    var n = noise1D(angle * 3 + noiseTime) * 0.3;
+                    var r = radius * (1 + n);
+                    var px = cx + Math.cos(angle) * r;
+                    var py = cy + Math.sin(angle) * r;
+                    if (i === 0) maskCtx.moveTo(px, py);
+                    else maskCtx.lineTo(px, py);
+                }
+                maskCtx.closePath();
                 maskCtx.fill();
             }
 
-            // Paint gradient stamps along a path for smooth coverage
+            // Paint solid blobs along a path
             function paintFluidSegment(x1, y1, x2, y2, force) {
                 var dx = x2 - x1, dy = y2 - y1;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                var steps = Math.max(1, Math.ceil(dist / (blobRadius * 0.2)));
+                var steps = Math.max(1, Math.ceil(dist / (blobRadius * 0.25)));
 
                 for (var i = 0; i <= steps; i++) {
                     var t = i / steps;
                     var x = x1 + dx * t;
                     var y = y1 + dy * t;
-                    stampGradient(x, y, blobRadius * (1 + force * 0.4), MOUSE_FORCE);
+                    stampBlob(x, y, blobRadius * (1 + force * 0.4));
                 }
             }
 
             function animate() {
                 if (!isAnimating) return;
 
+                // Advance noise time for living, moving waveform edges
+                noiseTime += 0.06;
+
                 // Smooth cursor — lower factor = more fluid/trailing motion
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
                 smoothX += (targetX - smoothX) * 0.10;
                 smoothY += (targetY - smoothY) * 0.10;
 
-                // === DISSIPATION — fade mask so revealed areas return to original ===
+                // === DISSIPATION — fade mask so revealed areas return FULLY ===
                 fadeCtx.clearRect(0, 0, W, H);
                 fadeCtx.globalAlpha = DISSIPATION;
                 fadeCtx.drawImage(maskCanvas, 0, 0);
@@ -1051,12 +1065,12 @@
                 maskCtx.clearRect(0, 0, W, H);
                 maskCtx.drawImage(fadeCanvas, 0, 0);
 
-                // === PAINT — stamp radial gradient at cursor ===
+                // === PAINT — solid wobbly blob at cursor ===
                 if (isActive && smoothX > -500 && prevX > -500) {
                     var dx = smoothX - prevX, dy = smoothY - prevY;
                     var speed = Math.sqrt(dx * dx + dy * dy);
 
-                    // Speed-based force: faster cursor = bigger/stronger blob
+                    // Speed-based force: faster cursor = bigger blob
                     var force = Math.min(speed / 25, 1.8);
 
                     if (speed > 0.2) {
@@ -1065,13 +1079,13 @@
 
                     // Always stamp at current cursor position
                     var cursorRadius = blobRadius * (1 + force * 0.4);
-                    stampGradient(smoothX, smoothY, cursorRadius, MOUSE_FORCE);
+                    stampBlob(smoothX, smoothY, cursorRadius);
                 }
 
                 prevX = smoothX;
                 prevY = smoothY;
 
-                // === RENDER ===
+                // === RENDER — no blur, no feathering, direct mask ===
                 ctx.clearRect(0, 0, W, H);
                 if (imgsReady < 2) { requestAnimationFrame(animate); return; }
 
@@ -1080,19 +1094,13 @@
                 // Base (rival) image — revealed underneath
                 ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                // Softened mask — blur the 1x mask up to DPR canvas for organic edges
-                blurCtx.clearRect(0, 0, W, H);
-                blurCtx.filter = 'blur(' + Math.round(blobRadius * 0.14) + 'px)';
-                blurCtx.drawImage(maskCanvas, 0, 0, W, H, 0, 0, W, H);
-                blurCtx.filter = 'none';
-
-                // Top image with fluid mask punched through
+                // Top image with mask punched through — direct, no blur
                 offCtx.clearRect(0, 0, W, H);
                 offCtx.globalCompositeOperation = 'source-over';
                 offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
                 offCtx.globalCompositeOperation = 'destination-out';
-                offCtx.drawImage(blurCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                offCtx.drawImage(maskCanvas, 0, 0, W, H, 0, 0, W, H);
 
                 // Composite onto main canvas
                 offCtx.globalCompositeOperation = 'source-over';
