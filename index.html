@@ -1022,12 +1022,22 @@
             .arena-pill { padding: 8px 14px; font-size: 12px; }
             .arena-pill svg { width: 14px; height: 14px; }
             .arena-download-btn { padding: 14px 32px; font-size: 14px; }
-            .avatar-showcase { gap: 20px; }
-            .avatar-card { width: 100px; height: 100px; border-radius: 24px; padding: 12px; }
-            .vs-badge { width: 48px; height: 48px; font-size: 13px; }
+            .avatar-showcase { gap: 16px; }
+            .avatar-card { width: 90px; height: 90px; border-radius: 22px; padding: 10px; }
+            .vs-badge { width: 44px; height: 44px; font-size: 12px; }
+            .explain-content { padding: 40px 20px; }
+            .explain-title { font-size: clamp(22px, 5vw, 36px); }
+            .explain-text { font-size: 11px; letter-spacing: 2px; max-width: 90%; }
+            .explain-label { font-size: 10px; letter-spacing: 4px; }
+            .rank-section { margin-bottom: 28px; }
             .rank-carousel-item { width: 60px; }
             .rank-carousel-item img { width: 44px; height: 44px; }
             .rank-carousel { gap: 14px; }
+            .arena-download-btn { padding: 14px 32px; font-size: 14px; }
+            .arena-cta { margin-top: 28px; }
+            .arena-features { gap: 8px; }
+            .arena-pill { padding: 8px 14px; font-size: 11px; }
+            .arena-pill svg { width: 14px; height: 14px; }
         }
 
         /* RESPONSIVE */
@@ -1053,15 +1063,33 @@
         @media (max-width: 480px) {
             .theme-switcher { gap: 4px; }
             .theme-btn { width: 24px; height: 24px; }
-            .avatar-showcase { gap: 14px; }
-            .avatar-card { width: 85px; height: 85px; border-radius: 20px; padding: 10px; }
-            .vs-badge { width: 40px; height: 40px; font-size: 12px; }
-            .explain-content { padding: 40px 16px; }
-            .explain-text { font-size: 14px; }
-            .rank-carousel-item { width: 56px; }
-            .rank-carousel-item img { width: 40px; height: 40px; }
-            .rank-carousel-item .rank-num { font-size: 8px; }
-            .rank-carousel { gap: 10px; }
+            .avatar-showcase { gap: 12px; margin-bottom: 32px; }
+            .avatar-card { width: 76px; height: 76px; border-radius: 18px; padding: 8px; }
+            .avatar-card::after { inset: -6px; }
+            .vs-badge { width: 36px; height: 36px; font-size: 11px; letter-spacing: 1px; }
+            .explain-content { padding: 32px 14px; }
+            .explain-title { font-size: 22px; margin-bottom: 14px; }
+            .explain-text { font-size: 10px; letter-spacing: 2px; line-height: 1.9; margin-bottom: 28px; max-width: 95%; }
+            .explain-label { font-size: 9px; letter-spacing: 3px; margin-bottom: 10px; }
+            .rank-section { margin-bottom: 20px; }
+            .rank-current { font-size: 9px; letter-spacing: 3px; margin-bottom: 10px; }
+            .rank-carousel-item { width: 50px; }
+            .rank-carousel-item img { width: 36px; height: 36px; }
+            .rank-carousel-item .rank-num { font-size: 7px; margin-top: 4px; }
+            .rank-carousel { gap: 8px; padding: 10px 0; }
+            .arena-features { gap: 6px; }
+            .arena-pill { padding: 6px 10px; font-size: 10px; }
+            .arena-pill svg { width: 12px; height: 12px; }
+            .arena-cta { margin-top: 20px; }
+            .arena-download-btn { padding: 12px 28px; font-size: 13px; }
+            .arena-sub { font-size: 11px; margin-top: 8px; }
+        }
+        /* Short screens — ensure explain section fits */
+        @media (max-height: 700px) {
+            .explain-content { padding: 24px 14px; }
+            .avatar-showcase { margin-bottom: 24px; }
+            .rank-section { margin-bottom: 16px; }
+            .arena-cta { margin-top: 16px; }
         }
     </style>
 </head>
