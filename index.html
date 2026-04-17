@@ -607,20 +607,21 @@
 
         /* Feature pills */
         .arena-features {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
             margin-top: 48px;
             z-index: 1;
+            max-width: 560px;
+            width: 100%;
         }
         .arena-pill {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
+            flex-direction: column;
+            gap: 6px;
+            padding: 14px 16px;
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 100px;
+            border-radius: 16px;
             background: rgba(255,255,255,0.03);
             color: rgba(255,255,255,0.6);
             font-family: var(--font);
@@ -630,6 +631,21 @@
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+        .arena-pill .pill-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.85);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+        .arena-pill .pill-desc {
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            line-height: 1.4;
+            font-weight: 400;
         }
         .arena-pill:hover {
             border-color: rgba(139,92,246,0.4);
@@ -680,7 +696,8 @@
             align-items: center;
             justify-content: center;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             background: #000000;
         }
         /* Cold liquid glass ambient glows */
@@ -720,10 +737,15 @@
 
         .explain-content {
             max-width: 900px;
+            width: 100%;
             text-align: center;
             padding: 60px 24px;
             position: relative;
             z-index: 1;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* Avatar showcase — 2 mythic avatars + VS */
@@ -885,7 +907,7 @@
         }
         .rank-carousel {
             display: flex;
-            gap: 20px;
+            gap: 24px;
             padding: 16px 0;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
@@ -897,13 +919,13 @@
         .rank-carousel:active { cursor: grabbing; }
         .rank-carousel-item {
             flex-shrink: 0;
-            width: 72px;
+            width: 100px;
             text-align: center;
             scroll-snap-align: center;
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
         .rank-carousel-item img {
-            width: 56px; height: 56px;
+            width: 80px; height: 80px;
             filter: drop-shadow(0 2px 10px rgba(100,140,255,0.15));
             transition: transform 0.3s ease, filter 0.3s ease;
         }
@@ -937,6 +959,202 @@
         }
         .arena-explain .arena-pill svg {
             stroke: rgba(160,190,255,0.5);
+        }
+        .arena-pill { cursor: pointer; }
+        .arena-pill.active {
+            border-color: rgba(120,160,255,0.25);
+            background: rgba(255,255,255,0.06);
+            grid-column: 1 / -1;
+        }
+
+        /* Expandable section */
+        .pill-expand {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        .arena-pill.active .pill-expand {
+            max-height: 200px;
+        }
+        .pill-expand-inner {
+            padding-top: 10px;
+        }
+
+        /* Demo animations */
+        .pill-demo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            height: 80px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Race demo — two phones with dots */
+        .demo-phone {
+            width: 36px; height: 56px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,10,30,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        .demo-screen {
+            width: 100%; height: 100%;
+            position: relative;
+        }
+        .demo-map {
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(20,40,80,0.4), rgba(10,20,50,0.4));
+        }
+        .demo-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            position: absolute;
+            animation: moveDot 2s ease-in-out infinite;
+        }
+        .dot-you { background: #4af; top: 60%; left: 30%; animation-delay: 0s; }
+        .dot-rival { background: #f55; top: 35%; left: 55%; animation-delay: 0.5s; }
+        .demo-label {
+            position: absolute; top: 3px; right: 3px;
+            font-size: 5px; font-weight: 700; color: #f33;
+            letter-spacing: 1px;
+            animation: blink 1s ease infinite;
+        }
+        .demo-vs-flash {
+            font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.7);
+            text-shadow: 0 0 12px rgba(100,150,255,0.5);
+            animation: pulse-vs 1.5s ease infinite;
+        }
+        @keyframes moveDot {
+            0%,100% { transform: translate(0,0); }
+            50% { transform: translate(8px,-10px); }
+        }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+        @keyframes pulse-vs { 0%,100%{transform:scale(1);opacity:0.7;} 50%{transform:scale(1.2);opacity:1;} }
+
+        /* Meetup demo — radar */
+        .demo-radar {
+            width: 70px; height: 70px;
+            position: relative;
+            border-radius: 50%;
+        }
+        .demo-radar-ring {
+            position: absolute; inset: 0;
+            border-radius: 50%;
+            border: 1px solid rgba(100,160,255,0.15);
+        }
+        .demo-radar-ring.r2 { inset: 10px; border-color: rgba(100,160,255,0.25); }
+        .demo-radar-ring.r3 { inset: 20px; border-color: rgba(100,160,255,0.35); }
+        .demo-radar-center {
+            position: absolute;
+            width: 6px; height: 6px;
+            background: #4af;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            box-shadow: 0 0 8px #4af;
+        }
+        .demo-radar-blip {
+            position: absolute;
+            width: 5px; height: 5px;
+            background: rgba(255,100,100,0.8);
+            border-radius: 50%;
+            animation: radarPulse 2s ease infinite;
+        }
+        .demo-radar-blip.b1 { top: 15%; left: 60%; animation-delay: 0s; }
+        .demo-radar-blip.b2 { top: 65%; left: 25%; animation-delay: 0.7s; }
+        .demo-radar-blip.b3 { top: 40%; left: 75%; animation-delay: 1.3s; }
+        @keyframes radarPulse {
+            0%,100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        /* Ranks demo — tier progression bar */
+        .demo-tier-bar {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 50px;
+            position: relative;
+            padding: 0 12px;
+            width: 100%;
+        }
+        .demo-tier {
+            flex: 1;
+            font-size: 6px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+            letter-spacing: 0.5px;
+            padding-top: 4px;
+            border-radius: 3px 3px 0 0;
+            background: rgba(255,255,255,0.05);
+            position: relative;
+        }
+        .demo-tier.t1 { height: 20px; }
+        .demo-tier.t2 { height: 26px; }
+        .demo-tier.t3 { height: 32px; }
+        .demo-tier.t4 { height: 38px; }
+        .demo-tier.t5 { height: 44px; }
+        .demo-tier.t6 { height: 50px; background: rgba(120,80,255,0.2); color: rgba(180,150,255,0.8); }
+        .demo-tier-fill {
+            position: absolute;
+            bottom: 0; left: 12px;
+            height: 3px;
+            background: linear-gradient(90deg, #4af, #a78bfa);
+            border-radius: 2px;
+            animation: tierFill 2.5s ease-in-out infinite;
+        }
+        @keyframes tierFill {
+            0% { width: 0%; }
+            100% { width: calc(100% - 24px); }
+        }
+
+        /* Ghost demo — runner + ghost trail */
+        .demo-ghost-track {
+            width: 90%;
+            height: 30px;
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .demo-ghost-runner {
+            position: absolute;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            bottom: 6px;
+        }
+        .demo-ghost-runner.real {
+            background: #4af;
+            box-shadow: 0 0 8px #4af;
+            animation: ghostRun 2.5s ease-in-out infinite;
+            z-index: 2;
+        }
+        .demo-ghost-runner.ghost {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: ghostRun 2.5s ease-in-out infinite;
+            animation-delay: 0.4s;
+            z-index: 1;
+        }
+        .demo-ghost-trail {
+            position: absolute;
+            bottom: 8px; left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));
+            animation: trailGrow 2.5s ease-in-out infinite;
+        }
+        @keyframes ghostRun {
+            0% { left: 5%; }
+            100% { left: 85%; }
+        }
+        @keyframes trailGrow {
+            0% { width: 0; }
+            100% { width: 80%; }
         }
 
         /* Download CTA — cold glass */
@@ -987,7 +1205,9 @@
 
         @media (max-width: 768px) {
             .arena-features { gap: 8px; }
-            .arena-pill { padding: 8px 14px; font-size: 12px; }
+            .arena-pill { padding: 10px 12px; border-radius: 12px; }
+            .arena-pill .pill-title { font-size: 11px; }
+            .arena-pill .pill-desc { font-size: 10px; }
             .arena-pill svg { width: 14px; height: 14px; }
             .arena-download-btn { padding: 14px 32px; font-size: 14px; }
             .avatar-showcase { gap: 12px; margin-bottom: 24px; }
@@ -999,15 +1219,17 @@
             .explain-label { font-size: 9px; letter-spacing: 3px; margin-bottom: 10px; }
             .rank-section { margin-bottom: 20px; }
             .rank-current { font-size: 9px; letter-spacing: 3px; }
-            .rank-carousel-item { width: 56px; }
-            .rank-carousel-item img { width: 40px; height: 40px; }
-            .rank-carousel { gap: 12px; }
-            .rank-carousel-item .rank-num { font-size: 7px; }
+            .rank-carousel-item { width: 80px; }
+            .rank-carousel-item img { width: 64px; height: 64px; }
+            .rank-carousel { gap: 16px; }
+            .rank-carousel-item .rank-num { font-size: 8px; }
             .arena-download-btn { padding: 12px 28px; font-size: 13px; }
             .arena-cta { margin-top: 20px; }
             .arena-features { gap: 6px; }
-            .arena-pill { padding: 6px 12px; font-size: 10px; }
-            .arena-pill svg { width: 13px; height: 13px; }
+            .arena-pill { padding: 8px 10px; border-radius: 10px; }
+            .arena-pill .pill-title { font-size: 10px; }
+            .arena-pill .pill-desc { font-size: 9px; }
+            .arena-pill svg { width: 12px; height: 12px; }
             .arena-sub { font-size: 11px; }
         }
 
@@ -1043,13 +1265,21 @@
             .explain-label { font-size: 8px; letter-spacing: 2.5px; margin-bottom: 8px; }
             .rank-section { margin-bottom: 14px; }
             .rank-current { font-size: 8px; letter-spacing: 2.5px; margin-bottom: 8px; }
-            .rank-carousel-item { width: 46px; }
-            .rank-carousel-item img { width: 32px; height: 32px; }
-            .rank-carousel-item .rank-num { font-size: 6px; margin-top: 3px; }
-            .rank-carousel { gap: 6px; padding: 8px 0; }
-            .arena-features { gap: 4px; }
-            .arena-pill { padding: 5px 8px; font-size: 9px; }
-            .arena-pill svg { width: 11px; height: 11px; }
+            .rank-carousel-item { width: 70px; }
+            .rank-carousel-item img { width: 54px; height: 54px; }
+            .rank-carousel-item .rank-num { font-size: 7px; margin-top: 3px; }
+            .rank-carousel { gap: 10px; padding: 8px 0; }
+            .arena-features { gap: 4px; grid-template-columns: 1fr 1fr; max-width: 100%; }
+            .arena-pill { padding: 6px 8px; border-radius: 8px; }
+            .arena-pill .pill-title { font-size: 9px; }
+            .arena-pill .pill-desc { font-size: 8px; line-height: 1.3; }
+            .arena-pill svg { width: 10px; height: 10px; }
+            .pill-demo { height: 60px; }
+            .demo-phone { width: 28px; height: 44px; }
+            .demo-vs-flash { font-size: 10px; }
+            .demo-radar { width: 50px; height: 50px; }
+            .demo-tier { font-size: 5px; }
+            .arena-pill.active .pill-expand { max-height: 150px; }
             .arena-cta { margin-top: 14px; }
             .arena-download-btn { padding: 10px 24px; font-size: 12px; }
             .arena-sub { font-size: 10px; margin-top: 6px; }
@@ -1208,21 +1438,63 @@
 
                 <!-- Feature pills -->
                 <div class="arena-features" id="arena-features">
-                    <div class="arena-pill">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Live GPS Racing
+                    <div class="arena-pill" data-pill="race" onclick="togglePill(this)">
+                        <div class="pill-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Race Head-to-Head
+                        </div>
+                        <div class="pill-desc">Challenge rivals anywhere in the world to real-time GPS races</div>
+                        <div class="pill-expand">
+                            <div class="pill-expand-inner">
+                                <div class="pill-demo pill-demo-race">
+                                    <div class="demo-phone"><div class="demo-screen"><div class="demo-map"></div><div class="demo-dot dot-you"></div><div class="demo-dot dot-rival"></div><div class="demo-label">LIVE</div></div></div>
+                                    <div class="demo-vs-flash">VS</div>
+                                    <div class="demo-phone"><div class="demo-screen"><div class="demo-map"></div><div class="demo-dot dot-you"></div><div class="demo-dot dot-rival"></div><div class="demo-label">LIVE</div></div></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="arena-pill">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/></svg>
-                        27 Rank Tiers
+                    <div class="arena-pill" data-pill="meetup" onclick="togglePill(this)">
+                        <div class="pill-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Meet Nearby Rivals
+                        </div>
+                        <div class="pill-desc">Discover and meetup with competitors in your area</div>
+                        <div class="pill-expand">
+                            <div class="pill-expand-inner">
+                                <div class="pill-demo pill-demo-meetup">
+                                    <div class="demo-radar"><div class="demo-radar-ring"></div><div class="demo-radar-ring r2"></div><div class="demo-radar-ring r3"></div><div class="demo-radar-blip b1"></div><div class="demo-radar-blip b2"></div><div class="demo-radar-blip b3"></div><div class="demo-radar-center"></div></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="arena-pill">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M12 7V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"/><circle cx="12" cy="14" r="3"/></svg>
-                        Apple Watch
+                    <div class="arena-pill" data-pill="ranks" onclick="togglePill(this)">
+                        <div class="pill-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/></svg>
+                            Climb the Ranks
+                        </div>
+                        <div class="pill-desc">Rise through 6 tiers from Underdog to Mythic with every win</div>
+                        <div class="pill-expand">
+                            <div class="pill-expand-inner">
+                                <div class="pill-demo pill-demo-ranks">
+                                    <div class="demo-tier-bar"><div class="demo-tier t1">UND</div><div class="demo-tier t2">CON</div><div class="demo-tier t3">BRK</div><div class="demo-tier t4">ACE</div><div class="demo-tier t5">LEG</div><div class="demo-tier t6">MYT</div><div class="demo-tier-fill"></div></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="arena-pill">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                        Victory Cards
+                    <div class="arena-pill" data-pill="ghost" onclick="togglePill(this)">
+                        <div class="pill-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M12 2C7.58 2 4 5.58 4 10v8.5c0 1.38.56 2.5 1.25 2.5.42 0 .83-.37 1.12-.87L7.5 18.5l1.13 1.63c.29.5.7.87 1.12.87s.83-.37 1.12-.87L12 18.5l1.13 1.63c.29.5.7.87 1.12.87s.83-.37 1.12-.87L16.5 18.5l1.13 1.63c.29.5.7.87 1.12.87.69 0 1.25-1.12 1.25-2.5V10c0-4.42-3.58-8-8-8z"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/></svg>
+                            Ghost Mode
+                        </div>
+                        <div class="pill-desc">Race against your past self and beat your own records</div>
+                        <div class="pill-expand">
+                            <div class="pill-expand-inner">
+                                <div class="pill-demo pill-demo-ghost">
+                                    <div class="demo-ghost-track"><div class="demo-ghost-runner real"></div><div class="demo-ghost-runner ghost"></div><div class="demo-ghost-trail"></div></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1756,6 +2028,17 @@
             }
             animateParticles();
         })();
+    </script>
+    <script>
+        function togglePill(el) {
+            var wasActive = el.classList.contains('active');
+            document.querySelectorAll('.arena-pill.active').forEach(function(p) {
+                p.classList.remove('active');
+            });
+            if (!wasActive) {
+                el.classList.add('active');
+            }
+        }
     </script>
 </body>
 </html>
