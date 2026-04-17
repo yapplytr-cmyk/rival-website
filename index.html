@@ -375,45 +375,32 @@
         /* Cursor glow and edge glow removed — clean reveal only */
         .cursor-glow, .reveal-edge-glow { display: none; }
 
-        /* Center content overlay — everything centered on screen */
-        .hero-center-content {
-            position: relative;
+        /* RIVAL brand — positioned above the girl's head */
+        .hero-brand-text {
+            position: absolute;
+            top: 12%;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 50;
-            text-align: center;
             pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .hero-center-content .brand-text {
             font-size: 16px;
             font-weight: 700;
             letter-spacing: 10px;
             color: #fff;
             text-transform: uppercase;
-            margin-bottom: 16px;
             opacity: 0;
             animation: fadeInUp 1s ease-out 0.3s forwards;
             text-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
-        .hero-center-content h2 {
-            font-size: clamp(24px, 5vw, 42px);
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            line-height: 1.15;
-            margin-bottom: 12px;
-            color: #fff;
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 0.5s forwards;
-            text-shadow: 0 2px 40px rgba(0,0,0,0.9);
-        }
-        .hero-center-content .intro-sub {
-            font-size: 14px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 36px;
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 0.7s forwards;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.9);
+
+        /* Enter Arena button — dead center of screen */
+        .hero-btn-wrap {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            text-align: center;
         }
 
         .enter-arena-btn {
@@ -427,7 +414,7 @@
             border: none;
             cursor: pointer;
             pointer-events: auto;
-            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease;
             box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -445,14 +432,9 @@
             animation: btnShimmer 2.5s ease-in-out infinite;
         }
         @keyframes btnShimmer { 0% { left: -100%; } 100% { left: 100%; } }
-        @keyframes btnPulseGlow {
-            0%, 100% { box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow), 0 4px 30px rgba(0,0,0,0.5); }
-            50% { box-shadow: 0 0 50px var(--accent-glow), 0 0 100px var(--accent-glow), 0 8px 40px rgba(0,0,0,0.4); }
-        }
         .enter-arena-btn:hover {
-            transform: translateY(-3px) scale(1.15);
+            transform: scale(1.15);
             box-shadow: 0 0 50px var(--accent-glow), 0 0 100px var(--accent-glow), 0 8px 40px rgba(0,0,0,0.4);
-            animation: btnPulseGlow 1.5s ease-in-out infinite, btnShimmer 2.5s ease-in-out infinite;
             cursor: pointer;
         }
         .enter-arena-btn:active {
@@ -485,7 +467,7 @@
         @keyframes hintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
         /* Text fade out when button pressed */
-        .hero-center-content.fading, .touch-hint.fading {
+        .hero-brand-text.fading, .hero-btn-wrap.fading, .touch-hint.fading {
             opacity: 0 !important;
             transition: opacity 0.5s ease;
             pointer-events: none !important;
@@ -579,11 +561,11 @@
             <source src="assets/hero-transition.mp4" type="video/mp4">
         </video>
 
-        <!-- Center content -->
-        <div class="hero-center-content" id="hero-center-content">
-            <div class="brand-text">R I V A L</div>
-            <h2>Reveal Your<br><span style="color:var(--accent)">Rival Within</span></h2>
-            <p class="intro-sub">Move your cursor to uncover the challenger</p>
+        <!-- RIVAL text — above the girl's head -->
+        <div class="hero-brand-text" id="hero-brand-text">R I V A L</div>
+
+        <!-- Enter button — dead center -->
+        <div class="hero-btn-wrap" id="hero-btn-wrap">
             <button class="enter-arena-btn" id="enter-arena-btn">Enter the Arena</button>
         </div>
 
@@ -1070,66 +1052,63 @@
                 if (trail.length > 0 || isActive) {
                     octx.globalCompositeOperation = 'destination-out';
 
-                    // Trail blobs — drip-shaped with gravity stretch
-                    for (var i = 0; i < trail.length; i++) {
-                        var t = trail[i];
-                        var life = 1 - (t.age / trailLifetime);
-                        var easedLife = life * life * life;
-                        var alpha = easedLife;
-                        var rad = t.radius * (0.3 + life * 0.7);
-                        var stretchY = t.stretch || 1; // vertical elongation from gravity
+                    // Smooth continuous brush stroke — connect all trail points
+                    // Draw from oldest to newest with increasing width + opacity
+                    octx.lineCap = 'round';
+                    octx.lineJoin = 'round';
 
-                        var grad = octx.createRadialGradient(t.x, t.y, rad * 0.2, t.x, t.y, rad * stretchY);
-                        grad.addColorStop(0, 'rgba(0,0,0,' + alpha.toFixed(3) + ')');
-                        grad.addColorStop(0.6, 'rgba(0,0,0,' + (alpha * 0.6).toFixed(3) + ')');
-                        grad.addColorStop(1, 'rgba(0,0,0,0)');
-                        octx.fillStyle = grad;
+                    if (trail.length > 1) {
+                        for (var i = 1; i < trail.length; i++) {
+                            var t0 = trail[i - 1];
+                            var t1 = trail[i];
+                            var life0 = 1 - (t0.age / trailLifetime);
+                            var life1 = 1 - (t1.age / trailLifetime);
+                            var alpha = Math.max(life0, life1);
+                            alpha = alpha * alpha; // ease
+                            var rad = (t0.radius + t1.radius) * 0.5;
+                            var avgLife = (life0 + life1) * 0.5;
+                            var lineW = rad * 2 * (0.3 + avgLife * 0.7);
 
-                        // Draw stretched ellipse for drip shape
-                        octx.save();
-                        octx.translate(t.x, t.y);
-                        octx.scale(1, stretchY); // stretch vertically for drip
-                        octx.beginPath();
-                        octx.arc(0, 0, rad, 0, Math.PI * 2);
-                        octx.closePath();
-                        octx.fill();
-                        octx.restore();
+                            octx.strokeStyle = 'rgba(0,0,0,' + alpha.toFixed(3) + ')';
+                            octx.lineWidth = lineW;
+                            octx.beginPath();
+                            octx.moveTo(t0.x, t0.y);
+                            // Smooth curve through midpoint
+                            var mx = (t0.x + t1.x) * 0.5;
+                            var my = (t0.y + t1.y) * 0.5;
+                            octx.quadraticCurveTo(t0.x, t0.y, mx, my);
+                            octx.stroke();
+                        }
+                        // Connect last trail point to cursor for seamless stroke
+                        if (isActive && smoothX > -500 && trail.length > 0) {
+                            var last = trail[trail.length - 1];
+                            var lastLife = 1 - (last.age / trailLifetime);
+                            octx.strokeStyle = 'rgba(0,0,0,1)';
+                            octx.lineWidth = blobRadius * 2 * (0.5 + lastLife * 0.5);
+                            octx.beginPath();
+                            octx.moveTo(last.x, last.y);
+                            octx.lineTo(smoothX, smoothY);
+                            octx.stroke();
+                        }
                     }
 
-                    // Main cursor blob
+                    // Main cursor circle — smooth round blob at cursor
                     if (isActive && smoothX > -500) {
-                        var mainGrad = octx.createRadialGradient(
-                            smoothX, smoothY, 0,
-                            smoothX, smoothY, blobRadius * 1.1
-                        );
-                        mainGrad.addColorStop(0, 'rgba(0,0,0,1)');
-                        mainGrad.addColorStop(0.75, 'rgba(0,0,0,1)');
-                        mainGrad.addColorStop(0.92, 'rgba(0,0,0,0.3)');
-                        mainGrad.addColorStop(1, 'rgba(0,0,0,0)');
-                        octx.fillStyle = mainGrad;
-
-                        // Use the proper blob function on offscreen
-                        var bSpeed = Math.sqrt(vx * vx + vy * vy);
-                        var bnx = bSpeed > 0.5 ? vx / bSpeed : 0;
-                        var bny = bSpeed > 0.5 ? vy / bSpeed : 0;
-                        var bStretch = Math.min(bSpeed * 0.6, blobRadius * 0.35);
-                        var bSquish = Math.min(bSpeed * 0.15, blobRadius * 0.1);
-                        var bRad = blobRadius * 1.1;
+                        octx.fillStyle = 'rgba(0,0,0,1)';
                         octx.beginPath();
-                        for (var j = 0; j < blobPoints; j++) {
-                            var angle = (j / blobPoints) * Math.PI * 2;
-                            var cosA = Math.cos(angle), sinA = Math.sin(angle);
-                            var baseOff = blobBaseOffsets[j].offset * bRad;
-                            var wobble = Math.sin(frame * 0.02 + blobBaseOffsets[j].wobblePhase) * blobBaseOffsets[j].wobbleAmp * bRad;
-                            var dot = cosA * bnx + sinA * bny;
-                            var cross = Math.abs(-sinA * bnx + cosA * bny);
-                            var br = bRad + baseOff + wobble + dot * bStretch - cross * bSquish;
-                            br = Math.max(bRad * 0.7, br);
-                            var px = smoothX + cosA * br, py = smoothY + sinA * br;
-                            if (j === 0) octx.moveTo(px, py);
-                            else octx.lineTo(px, py);
-                        }
-                        octx.closePath();
+                        octx.arc(smoothX, smoothY, blobRadius, 0, Math.PI * 2);
+                        octx.fill();
+
+                        // Soft feathered edge
+                        var feather = octx.createRadialGradient(
+                            smoothX, smoothY, blobRadius * 0.85,
+                            smoothX, smoothY, blobRadius * 1.2
+                        );
+                        feather.addColorStop(0, 'rgba(0,0,0,0.5)');
+                        feather.addColorStop(1, 'rgba(0,0,0,0)');
+                        octx.fillStyle = feather;
+                        octx.beginPath();
+                        octx.arc(smoothX, smoothY, blobRadius * 1.2, 0, Math.PI * 2);
                         octx.fill();
                     }
                 }
@@ -1143,12 +1122,14 @@
 
             // ENTER BUTTON — fade text, play transition video, then reveal site
             var transitionVideo = document.getElementById('hero-transition-video');
-            var heroCenterContent = document.getElementById('hero-center-content');
+            var heroBrandText = document.getElementById('hero-brand-text');
+            var heroBtnWrap = document.getElementById('hero-btn-wrap');
             var touchHint = document.getElementById('touch-hint');
 
             enterBtn.addEventListener('click', function() {
                 // 1. Fade out all text/buttons immediately
-                heroCenterContent.classList.add('fading');
+                heroBrandText.classList.add('fading');
+                heroBtnWrap.classList.add('fading');
                 touchHint.classList.add('fading');
 
                 // 2. After text fades, show and play the transition video
