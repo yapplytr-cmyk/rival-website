@@ -855,26 +855,26 @@
 
             topImg.onload = function() { imgReady = true; };
 
-            // Trail of recent cursor positions for liquid brush smear
-            var trail = []; // { x, y, vx, vy, age }
-            var maxTrail = 50; // longer trail — more drips
-            var trailLifetime = 80; // much slower fade — water dripping off
+            // Trail of recent cursor positions — soft liquid smear
+            var trail = [];
+            var maxTrail = 30;
+            var trailLifetime = 120; // long slow fade
 
             // Smooth cursor
             var targetX = -999, targetY = -999;
             var smoothX = -999, smoothY = -999;
             var prevX = -999, prevY = -999;
             var isActive = false;
-            var frame = 0; // for subtle wobble animation tied to movement
+            var frame = 0;
 
-            // Blob points for liquid shape — irregular offsets so it's NEVER a circle
-            var blobPoints = 20;
-            var blobBaseOffsets = []; // permanent random offsets per point
+            // Blob shape — 10 soft control points with gentle offsets
+            var blobPoints = 10;
+            var blobBaseOffsets = [];
             for (var i = 0; i < blobPoints; i++) {
                 blobBaseOffsets.push({
-                    offset: (Math.random() - 0.5) * 0.35, // -0.175 to +0.175 of radius
+                    offset: (Math.random() - 0.5) * 0.15, // very gentle irregularity
                     wobblePhase: Math.random() * Math.PI * 2,
-                    wobbleAmp: 0.03 + Math.random() * 0.06 // subtle living wobble
+                    wobbleAmp: 0.015 + Math.random() * 0.025 // barely perceptible living movement
                 });
             }
 
@@ -925,13 +925,14 @@
                 isActive = true;
             });
 
-            // Draw an organic water blob — never circular, stretches with velocity
+            // Soft organic liquid blob — smooth, clean, gentle distortion
             function drawLiquidBlob(cx, cy, radius, vx, vy, useOffsets) {
                 var speed = Math.sqrt(vx * vx + vy * vy);
                 var nx = speed > 0.5 ? vx / speed : 0;
                 var ny = speed > 0.5 ? vy / speed : 0;
-                var stretch = Math.min(speed * 1.8, radius * 1.0);
-                var squish = Math.min(speed * 0.4, radius * 0.3);
+                // Gentle stretch — much softer than before
+                var stretch = Math.min(speed * 0.6, radius * 0.35);
+                var squish = Math.min(speed * 0.15, radius * 0.1);
 
                 var points = [];
                 for (var i = 0; i < blobPoints; i++) {
@@ -939,22 +940,19 @@
                     var cosA = Math.cos(angle);
                     var sinA = Math.sin(angle);
 
-                    // Base irregular shape — NEVER a perfect circle
-                    var baseOffset = useOffsets ? blobBaseOffsets[i].offset * radius : 0;
-                    // Subtle organic wobble tied to frame count (only moves when mouse moves)
-                    var wobble = useOffsets ? Math.sin(frame * 0.03 + blobBaseOffsets[i].wobblePhase) * blobBaseOffsets[i].wobbleAmp * radius : 0;
+                    var baseOffset = useOffsets ? blobBaseOffsets[i % blobBaseOffsets.length].offset * radius : 0;
+                    var wobble = useOffsets ? Math.sin(frame * 0.02 + blobBaseOffsets[i % blobBaseOffsets.length].wobblePhase) * blobBaseOffsets[i % blobBaseOffsets.length].wobbleAmp * radius : 0;
 
-                    // Velocity-based distortion
                     var dot = cosA * nx + sinA * ny;
                     var cross = Math.abs(-sinA * nx + cosA * ny);
 
                     var r = radius + baseOffset + wobble + dot * stretch - cross * squish;
-                    r = Math.max(radius * 0.4, r);
+                    r = Math.max(radius * 0.7, r);
 
                     points.push({ x: cx + cosA * r, y: cy + sinA * r });
                 }
 
-                // Catmull-Rom splines for ultra-smooth organic curves
+                // Smooth Catmull-Rom spline
                 ctx.beginPath();
                 for (var i = 0; i < points.length; i++) {
                     var p0 = points[(i - 1 + points.length) % points.length];
@@ -974,89 +972,86 @@
             function animate() {
                 if (!isAnimating) return;
 
-                // Smooth lerp
+                // Very smooth cursor following — feels liquid/floaty
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.12;
-                smoothY += (targetY - smoothY) * 0.12;
+                smoothX += (targetX - smoothX) * 0.08;
+                smoothY += (targetY - smoothY) * 0.08;
 
-                // Velocity
                 var vx = smoothX - prevX;
                 var vy = smoothY - prevY;
                 var speed = Math.sqrt(vx * vx + vy * vy);
 
-                // Increment frame (for wobble)
-                if (speed > 0.5) frame++;
+                if (speed > 0.3) frame++;
 
-                // Add to trail when moving — drop water blobs behind
-                if (isActive && speed > 1) {
+                // Drop trail points — spaced out, gentle
+                if (isActive && speed > 2) {
                     trail.push({
                         x: smoothX, y: smoothY,
-                        vx: vx * 0.3, vy: vy * 0.3, // initial drift velocity (slowing)
+                        vx: vx * 0.15, vy: vy * 0.15,
                         age: 0,
-                        radius: blobRadius * (0.6 + Math.random() * 0.4), // varied sizes
-                        gravity: 0.15 + Math.random() * 0.2 // water drops fall
+                        radius: blobRadius * (0.7 + Math.random() * 0.3),
+                        gravity: 0.04 + Math.random() * 0.06
                     });
                     if (trail.length > maxTrail) trail.shift();
                 }
 
-                // Age & drift trail points — they slow down and drip with gravity
+                // Age trail — very gentle drift and gravity
                 for (var i = trail.length - 1; i >= 0; i--) {
                     var t = trail[i];
                     t.age++;
-                    // Drift: slow down and fall like water
                     t.x += t.vx;
-                    t.y += t.vy + t.gravity; // gravity pulls drops down
-                    t.vx *= 0.96; // friction
-                    t.vy *= 0.96;
-                    t.gravity += 0.03; // accelerating drip
-                    if (t.age > trailLifetime) {
-                        trail.splice(i, 1);
-                    }
+                    t.y += t.vy + t.gravity;
+                    t.vx *= 0.98; // very gentle friction
+                    t.vy *= 0.98;
+                    t.gravity += 0.008; // slow gravity ramp
+                    if (t.age > trailLifetime) trail.splice(i, 1);
                 }
 
                 prevX = smoothX;
                 prevY = smoothY;
 
-                // Clear
                 ctx.clearRect(0, 0, W, H);
                 if (!imgReady) { requestAnimationFrame(animate); return; }
 
-                // Draw the normal (top) image covering the full canvas
                 var r = getCoverRect(topImg);
                 ctx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                // Cut out the liquid trail — each trail point is a blob that fades with age
                 if (trail.length > 0 || isActive) {
                     ctx.save();
                     ctx.globalCompositeOperation = 'destination-out';
 
-                    // Draw trail blobs (older = smaller and more transparent)
+                    // Trail blobs — soft fade, smooth shrink
                     for (var i = 0; i < trail.length; i++) {
                         var t = trail[i];
-                        var life = 1 - (t.age / trailLifetime); // 1 = fresh, 0 = about to die
-                        var alpha = life * life; // ease-out fade
-                        var rad = t.radius * (0.5 + life * 0.5); // shrink as it ages
+                        var life = 1 - (t.age / trailLifetime);
+                        var easedLife = life * life * life; // cubic ease — very smooth fade
+                        var alpha = easedLife;
+                        var rad = t.radius * (0.3 + life * 0.7);
 
-                        ctx.fillStyle = 'rgba(0,0,0,' + alpha.toFixed(3) + ')';
-                        drawLiquidBlob(t.x, t.y, rad, t.vx * life, t.vy * life, alpha);
+                        // Soft radial gradient per trail blob for feathered edges
+                        var grad = ctx.createRadialGradient(t.x, t.y, rad * 0.3, t.x, t.y, rad);
+                        grad.addColorStop(0, 'rgba(0,0,0,' + alpha.toFixed(3) + ')');
+                        grad.addColorStop(0.7, 'rgba(0,0,0,' + (alpha * 0.5).toFixed(3) + ')');
+                        grad.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = grad;
+                        drawLiquidBlob(t.x, t.y, rad, t.vx * life, t.vy * life, false);
                         ctx.fill();
                     }
 
-                    // Main cursor blob — always full size and fully opaque
+                    // Main cursor blob — smooth with soft feathered edge
                     if (isActive && smoothX > -500) {
-                        ctx.fillStyle = 'rgba(0,0,0,1)';
-                        drawLiquidBlob(smoothX, smoothY, blobRadius, vx, vy, 1);
-                        ctx.fill();
-
-                        // Soft edge around main blob — very subtle feather, no glow
-                        var feather = ctx.createRadialGradient(
-                            smoothX, smoothY, blobRadius * 0.85,
-                            smoothX, smoothY, blobRadius * 1.25
+                        // Inner solid core
+                        var mainGrad = ctx.createRadialGradient(
+                            smoothX, smoothY, 0,
+                            smoothX, smoothY, blobRadius * 1.15
                         );
-                        feather.addColorStop(0, 'rgba(0,0,0,0.6)');
-                        feather.addColorStop(1, 'rgba(0,0,0,0)');
-                        ctx.fillStyle = feather;
-                        ctx.fillRect(smoothX - blobRadius * 1.5, smoothY - blobRadius * 1.5, blobRadius * 3, blobRadius * 3);
+                        mainGrad.addColorStop(0, 'rgba(0,0,0,1)');
+                        mainGrad.addColorStop(0.75, 'rgba(0,0,0,1)');
+                        mainGrad.addColorStop(0.9, 'rgba(0,0,0,0.4)');
+                        mainGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = mainGrad;
+                        drawLiquidBlob(smoothX, smoothY, blobRadius * 1.15, vx, vy, true);
+                        ctx.fill();
                     }
 
                     ctx.restore();
