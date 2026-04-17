@@ -17,14 +17,15 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         /* ═══════════════════════════════════════════════════════
            THEME SYSTEM — 3 themes matching the Rival app
            ═══════════════════════════════════════════════════════ */
         :root {
-            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            --font: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            --font-display: 'Bebas Neue', 'Rajdhani', sans-serif;
             --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
             --glass-blur: 24px;
             --glass-saturation: 1.8;
@@ -213,9 +214,10 @@
         }
 
         .nav-logo span {
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 4px;
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 6px;
             color: var(--text-primary);
         }
 
@@ -255,17 +257,19 @@
         .theme-btn[data-theme="purple"] { background: linear-gradient(135deg, #581c87, #a855f7); }
 
         .nav-cta {
+            font-family: var(--font-display);
             padding: 10px 24px;
             border-radius: 12px;
             background: var(--cta-gradient);
             color: #fff;
-            font-weight: 700;
-            font-size: 14px;
+            font-weight: 400;
+            font-size: 16px;
             text-decoration: none;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .nav-cta:hover {
@@ -312,12 +316,14 @@
         }
 
         .hero h1 {
-            font-size: clamp(40px, 8vw, 80px);
-            font-weight: 900;
-            line-height: 1.05;
-            letter-spacing: -2px;
+            font-family: var(--font-display);
+            font-size: clamp(48px, 10vw, 100px);
+            font-weight: 400;
+            line-height: 1.0;
+            letter-spacing: 4px;
             margin-bottom: 24px;
             animation: fadeInUp 0.8s ease-out 0.4s both;
+            text-transform: uppercase;
         }
 
         .hero h1 .accent {
@@ -345,6 +351,7 @@
         }
 
         .btn-download {
+            font-family: var(--font-display);
             display: inline-flex;
             align-items: center;
             gap: 12px;
@@ -352,13 +359,14 @@
             border-radius: 16px;
             background: var(--cta-gradient);
             color: #fff;
-            font-weight: 700;
-            font-size: 16px;
+            font-weight: 400;
+            font-size: 18px;
             text-decoration: none;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .btn-download:hover {
@@ -406,7 +414,6 @@
         .float-avatar {
             position: absolute;
             width: 64px; height: 64px;
-            border-radius: 20px;
             opacity: 0.15;
             animation: floatAvatar 15s ease-in-out infinite;
         }
@@ -557,6 +564,7 @@
         }
 
         .section-label {
+            font-family: var(--font);
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 4px;
@@ -567,12 +575,14 @@
         }
 
         .section-title {
-            font-size: clamp(28px, 5vw, 48px);
-            font-weight: 900;
+            font-family: var(--font-display);
+            font-size: clamp(32px, 6vw, 56px);
+            font-weight: 400;
             text-align: center;
-            letter-spacing: -1px;
+            letter-spacing: 3px;
             margin-bottom: 60px;
-            line-height: 1.15;
+            line-height: 1.1;
+            text-transform: uppercase;
         }
 
         .features-grid {
@@ -619,8 +629,11 @@
         }
 
         .feature-card h3 {
-            font-size: 20px;
-            font-weight: 800;
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             margin-bottom: 10px;
             position: relative;
             z-index: 1;
@@ -718,21 +731,19 @@
         .avatar-marquee {
             display: flex;
             gap: 24px;
-            animation: marquee 30s linear infinite;
+            animation: marquee 45s linear infinite;
             width: max-content;
         }
 
         .avatar-marquee img {
             width: 80px; height: 80px;
-            border-radius: 24px;
-            border: 2px solid var(--glass-border);
             transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
         }
 
         .avatar-marquee img:hover {
-            border-color: var(--accent);
-            transform: scale(1.15) rotate(-3deg);
-            box-shadow: 0 0 30px var(--accent-glow);
+            transform: scale(1.2) rotate(-3deg);
+            filter: drop-shadow(0 0 20px var(--accent-glow));
         }
 
         @keyframes marquee {
@@ -1072,7 +1083,7 @@
     <section class="avatar-section fade-in">
         <div class="section-label" style="padding: 0 24px; margin-bottom: 32px;">Choose Your Fighter</div>
         <div class="avatar-marquee" id="avatar-marquee">
-            <!-- Duplicated for seamless loop -->
+            <!-- All app avatars -->
             <img src="assets/cat-devil.png" alt="Devil">
             <img src="assets/cat-king.png" alt="King">
             <img src="assets/cat-ninja.png" alt="Ninja">
@@ -1082,7 +1093,23 @@
             <img src="assets/cat-wink.png" alt="Wink">
             <img src="assets/cat-grumpy.png" alt="Grumpy">
             <img src="assets/cat-dj.png" alt="DJ">
-            <!-- Duplicate set for seamless loop -->
+            <img src="assets/cat-pixel.png" alt="Pixel">
+            <img src="assets/cat-sleepy.png" alt="Sleepy">
+            <img src="assets/cat-golf.png" alt="Golf">
+            <img src="assets/cat-planet.png" alt="Planet">
+            <img src="assets/cat-matrix.png" alt="Matrix">
+            <img src="assets/cat-friends.png" alt="Friends">
+            <img src="assets/ranks/1.png" alt="Breakout">
+            <img src="assets/ranks/2.png" alt="Ace">
+            <img src="assets/ranks/3.png" alt="Ace">
+            <img src="assets/ranks/4.png" alt="Ace">
+            <img src="assets/ranks/5.png" alt="Contender">
+            <img src="assets/ranks/13.png" alt="Mythic">
+            <img src="assets/ranks/15.png" alt="Legend">
+            <img src="assets/ranks/18.png" alt="Mythic">
+            <img src="assets/ranks/20.png" alt="Mythic">
+            <img src="assets/ranks/24.png" alt="Legend">
+            <!-- Duplicate for seamless loop -->
             <img src="assets/cat-devil.png" alt="Devil">
             <img src="assets/cat-king.png" alt="King">
             <img src="assets/cat-ninja.png" alt="Ninja">
@@ -1092,6 +1119,22 @@
             <img src="assets/cat-wink.png" alt="Wink">
             <img src="assets/cat-grumpy.png" alt="Grumpy">
             <img src="assets/cat-dj.png" alt="DJ">
+            <img src="assets/cat-pixel.png" alt="Pixel">
+            <img src="assets/cat-sleepy.png" alt="Sleepy">
+            <img src="assets/cat-golf.png" alt="Golf">
+            <img src="assets/cat-planet.png" alt="Planet">
+            <img src="assets/cat-matrix.png" alt="Matrix">
+            <img src="assets/cat-friends.png" alt="Friends">
+            <img src="assets/ranks/1.png" alt="Breakout">
+            <img src="assets/ranks/2.png" alt="Ace">
+            <img src="assets/ranks/3.png" alt="Ace">
+            <img src="assets/ranks/4.png" alt="Ace">
+            <img src="assets/ranks/5.png" alt="Contender">
+            <img src="assets/ranks/13.png" alt="Mythic">
+            <img src="assets/ranks/15.png" alt="Legend">
+            <img src="assets/ranks/18.png" alt="Mythic">
+            <img src="assets/ranks/20.png" alt="Mythic">
+            <img src="assets/ranks/24.png" alt="Legend">
         </div>
     </section>
 
