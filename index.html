@@ -500,19 +500,13 @@
             pointer-events: none !important;
         }
 
-        /* Transition video — instant switch, no fade */
+        /* Transition video — hidden, drawn onto canvas instead for pixel-perfect alignment */
         .hero-transition-video {
             position: absolute;
             top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            object-position: center top;
-            z-index: 15;
+            width: 0; height: 0;
             opacity: 0;
             pointer-events: none;
-        }
-        .hero-transition-video.playing {
-            opacity: 1;
         }
         .interactive-hero.fading-out {
             opacity: 0;
@@ -970,7 +964,7 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                blobRadius = W <= 480 ? 60 : W <= 768 ? 85 : 110;
+                blobRadius = W <= 480 ? 80 : W <= 768 ? 120 : 160;
                 // All canvases at DPR resolution for crisp retina output
                 maskCanvas.width = W * dpr;
                 maskCanvas.height = H * dpr;
@@ -985,8 +979,9 @@
             resize();
             window.addEventListener('resize', resize);
 
-            function getCoverRect(img) {
-                var iw = img.naturalWidth, ih = img.naturalHeight;
+            function getCoverRect(el) {
+                var iw = el.naturalWidth || el.videoWidth;
+                var ih = el.naturalHeight || el.videoHeight;
                 var scale = Math.max(W / iw, H / ih);
                 var dw = iw * scale, dh = ih * scale;
                 return { x: (W - dw) / 2, y: 0, w: dw, h: dh };
@@ -1032,30 +1027,52 @@
                 return from + diff * t;
             }
 
+            // Pre-rendered brush tip for performance
+            var brushTipCanvas = document.createElement('canvas');
+            var brushTipCtx2 = brushTipCanvas.getContext('2d');
+            var cachedBrushSize = 0;
+
+            function buildBrushTip(size) {
+                cachedBrushSize = size;
+                var px = Math.ceil(size * 2 * dpr) + 2;
+                brushTipCanvas.width = px;
+                brushTipCanvas.height = px;
+                var c = px / 2;
+                var grad = brushTipCtx2.createRadialGradient(c, c, 0, c, c, c);
+                grad.addColorStop(0, 'rgba(255,255,255,1)');
+                grad.addColorStop(0.55, 'rgba(255,255,255,1)');
+                grad.addColorStop(0.75, 'rgba(255,255,255,0.8)');
+                grad.addColorStop(0.9, 'rgba(255,255,255,0.25)');
+                grad.addColorStop(1, 'rgba(255,255,255,0)');
+                brushTipCtx2.fillStyle = grad;
+                brushTipCtx2.fillRect(0, 0, px, px);
+            }
+
+            // Animated brush time — gives the brush a living, breathing feel
+            var brushTime = 0;
+
             function stampBrush(cx, cy, size, angle, stretch) {
-                var rx = size;
-                var ry = size * (0.28 + (1 - stretch) * 0.72); // much more elongated along stroke direction
+                var roundSize = Math.round(size);
+                if (Math.abs(roundSize - cachedBrushSize) > 5) buildBrushTip(roundSize);
+
+                // Animated pulse — brush breathes and wobbles
+                var pulse = 1 + Math.sin(brushTime * 2.5) * 0.06 + Math.sin(brushTime * 4.1) * 0.03;
+                var scaleX = pulse;
+                var scaleY = (0.35 + (1 - stretch) * 0.65) * (1 + Math.sin(brushTime * 3.3 + 1) * 0.04);
+
+                var drawR = cachedBrushSize;
                 maskCtx.save();
                 maskCtx.translate(cx, cy);
                 maskCtx.rotate(angle);
-                maskCtx.scale(1, ry / rx);
-                var grad = maskCtx.createRadialGradient(0, 0, 0, 0, 0, rx);
-                grad.addColorStop(0, 'rgba(255,255,255,1)');
-                grad.addColorStop(0.6, 'rgba(255,255,255,1)');
-                grad.addColorStop(0.8, 'rgba(255,255,255,0.7)');
-                grad.addColorStop(0.92, 'rgba(255,255,255,0.2)');
-                grad.addColorStop(1, 'rgba(255,255,255,0)');
-                maskCtx.fillStyle = grad;
-                maskCtx.beginPath();
-                maskCtx.arc(0, 0, rx, 0, Math.PI * 2);
-                maskCtx.fill();
+                maskCtx.scale(scaleX, scaleY);
+                maskCtx.drawImage(brushTipCanvas, -drawR, -drawR, drawR * 2, drawR * 2);
                 maskCtx.restore();
             }
 
             function paintStroke(x1, y1, x2, y2, size, angle, stretch) {
                 var dx = x2 - x1, dy = y2 - y1;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                var spacing = size * 0.1;
+                var spacing = size * 0.08;
                 var steps = Math.max(1, Math.ceil(dist / spacing));
                 for (var i = 0; i <= steps; i++) {
                     var t = i / steps;
@@ -1075,6 +1092,9 @@
 
             function animate() {
                 if (!isAnimating) return;
+
+                // Advance brush animation time
+                brushTime += 0.08;
 
                 // Smooth cursor
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
@@ -1140,39 +1160,48 @@
 
                 var r = getCoverRect(topImg);
 
-                ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
+                // If video is playing, draw video onto canvas with same positioning
+                if (videoPlaying && transVideo.readyState >= 2) {
+                    var vr = getCoverRect(transVideo);
+                    ctx.drawImage(transVideo, vr.x, vr.y, vr.w, vr.h);
+                } else {
+                    ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                offCtx.clearRect(0, 0, W, H);
-                offCtx.globalCompositeOperation = 'source-over';
-                offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
+                    offCtx.clearRect(0, 0, W, H);
+                    offCtx.globalCompositeOperation = 'source-over';
+                    offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                offCtx.save();
-                offCtx.setTransform(1, 0, 0, 1, 0, 0);
-                offCtx.globalCompositeOperation = 'destination-out';
-                offCtx.drawImage(maskCanvas, 0, 0);
-                offCtx.restore();
+                    offCtx.save();
+                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
+                    offCtx.globalCompositeOperation = 'destination-out';
+                    offCtx.drawImage(maskCanvas, 0, 0);
+                    offCtx.restore();
 
-                offCtx.globalCompositeOperation = 'source-over';
-                ctx.drawImage(offCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                    offCtx.globalCompositeOperation = 'source-over';
+                    ctx.drawImage(offCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
+                }
 
                 requestAnimationFrame(animate);
             }
+
+            buildBrushTip(blobRadius);
             animate();
 
-            // ========== ENTER — dissolve strokes, then instant video ==========
+            // ========== ENTER — dissolve strokes, then seamless video on canvas ==========
             var heroBrandText = document.getElementById('hero-brand-text');
             var heroBtnWrap = document.getElementById('hero-btn-wrap');
             var touchHint = document.getElementById('touch-hint');
 
             var transitionStarted = false;
+            var videoPlaying = false;
 
             function startVideoInstant() {
-                // Video first frame is already decoded (preloaded)
-                // Canvas is showing hero-base.jpg with no mask = identical to video frame 1
-                // Instant switch — no fade, no transition, seamless
+                // Play video and draw it onto the SAME canvas with the SAME getCoverRect
+                // No separate HTML element visible — guaranteed pixel-perfect match
                 transVideo.currentTime = 0;
-                transVideo.classList.add('playing');
-                transVideo.play().catch(function() {
+                transVideo.play().then(function() {
+                    videoPlaying = true;
+                }).catch(function() {
                     revealArena();
                 });
                 transVideo.addEventListener('ended', function onEnd() {
