@@ -953,17 +953,13 @@
             var DISSIPATION = 0.965;
             var MOUSE_FORCE = 1.0;
 
-            // Mask canvas (1x resolution — no DPR on mask to avoid zoom artifacts)
+            // All canvases at full DPR for retina sharpness
             var maskCanvas = document.createElement('canvas');
             var maskCtx = maskCanvas.getContext('2d');
 
-            // Temp canvas for dissipation fade
             var fadeCanvas = document.createElement('canvas');
             var fadeCtx = fadeCanvas.getContext('2d');
 
-            // (blur canvas removed — no feathering)
-
-            // Offscreen canvas for compositing
             var offCanvas = document.createElement('canvas');
             var offCtx = offCanvas.getContext('2d');
 
@@ -976,14 +972,14 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                // Bigger blob radius — desktop 220px, tablet 150px, phone 100px
                 blobRadius = W <= 480 ? 100 : W <= 768 ? 150 : 220;
-                // Mask + fade at 1x resolution (avoids DPR zoom artifacts)
-                maskCanvas.width = W;
-                maskCanvas.height = H;
-                fadeCanvas.width = W;
-                fadeCanvas.height = H;
-                // Off canvas at DPR for crisp final output
+                // All canvases at DPR resolution for crisp retina output
+                maskCanvas.width = W * dpr;
+                maskCanvas.height = H * dpr;
+                maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                fadeCanvas.width = W * dpr;
+                fadeCanvas.height = H * dpr;
+                fadeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 offCanvas.width = W * dpr;
                 offCanvas.height = H * dpr;
                 offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1093,13 +1089,19 @@
                 noiseTime += noiseSpeed;
 
                 // === DISSIPATION — fade mask so revealed areas return FULLY ===
-                fadeCtx.clearRect(0, 0, W, H);
+                fadeCtx.save();
+                fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
+                fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalAlpha = DISSIPATION;
                 fadeCtx.drawImage(maskCanvas, 0, 0);
                 fadeCtx.globalAlpha = 1;
+                fadeCtx.restore();
 
-                maskCtx.clearRect(0, 0, W, H);
+                maskCtx.save();
+                maskCtx.setTransform(1, 0, 0, 1, 0, 0);
+                maskCtx.clearRect(0, 0, W * dpr, H * dpr);
                 maskCtx.drawImage(fadeCanvas, 0, 0);
+                maskCtx.restore();
 
                 // === PAINT — solid wobbly blob at cursor ===
                 if (isActive && smoothX > -500 && prevX > -500) {
@@ -1130,21 +1132,128 @@
                 // Base (rival) image — revealed underneath
                 ctx.drawImage(baseImg, r.x, r.y, r.w, r.h);
 
-                // Top image with mask punched through — direct, no blur
+                // Top image with mask punched through
                 offCtx.clearRect(0, 0, W, H);
                 offCtx.globalCompositeOperation = 'source-over';
                 offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
+                // Punch mask — both are at DPR, use identity transform for raw pixel copy
+                offCtx.save();
+                offCtx.setTransform(1, 0, 0, 1, 0, 0);
                 offCtx.globalCompositeOperation = 'destination-out';
-                offCtx.drawImage(maskCanvas, 0, 0, W, H, 0, 0, W, H);
+                offCtx.drawImage(maskCanvas, 0, 0);
+                offCtx.restore();
 
                 // Composite onto main canvas
                 offCtx.globalCompositeOperation = 'source-over';
                 ctx.drawImage(offCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
 
+                // === SHATTER PARTICLES — draw falling blob chunks ===
+                if (shatterParticles.length > 0) {
+                    drawShatterParticles();
+                }
+
                 requestAnimationFrame(animate);
             }
             animate();
+
+            // ========== SHATTER EFFECT — blob breaks apart and falls ==========
+            var shatterParticles = [];
+            var shatterActive = false;
+
+            function createShatterParticles() {
+                shatterParticles = [];
+                // Sample the current mask to find where the blob is
+                var sampleCtx = maskCtx;
+                var pw = W * dpr, ph = H * dpr;
+                var imageData = sampleCtx.getImageData(0, 0, pw, ph);
+                var data = imageData.data;
+
+                // Grid scan — find lit pixels and create chunks
+                var chunkSize = Math.round(18 * dpr);
+                for (var gy = 0; gy < ph; gy += chunkSize) {
+                    for (var gx = 0; gx < pw; gx += chunkSize) {
+                        // Sample center of chunk
+                        var sx = Math.min(gx + Math.floor(chunkSize / 2), pw - 1);
+                        var sy = Math.min(gy + Math.floor(chunkSize / 2), ph - 1);
+                        var idx = (sy * pw + sx) * 4;
+                        if (data[idx + 3] > 30) {
+                            // This chunk has mask data — create a falling particle
+                            shatterParticles.push({
+                                x: gx / dpr,
+                                y: gy / dpr,
+                                w: chunkSize / dpr,
+                                h: chunkSize / dpr,
+                                vx: (Math.random() - 0.5) * 3,
+                                vy: Math.random() * 2 + 1,
+                                gravity: 0.15 + Math.random() * 0.1,
+                                rotation: 0,
+                                rotSpeed: (Math.random() - 0.5) * 0.15,
+                                alpha: 1,
+                                fadeSpeed: 0.008 + Math.random() * 0.006,
+                                // Store the chunk's image data from the BASE image (rival girl)
+                                srcX: gx,
+                                srcY: gy,
+                                srcW: chunkSize,
+                                srcH: chunkSize
+                            });
+                        }
+                    }
+                }
+                shatterActive = true;
+            }
+
+            // Snapshot canvas for shatter chunks
+            var shatterSnapshot = document.createElement('canvas');
+            var shatterSnapCtx = shatterSnapshot.getContext('2d');
+
+            function takeShatterSnapshot() {
+                // Capture the current revealed area (base image masked by blob)
+                shatterSnapshot.width = W * dpr;
+                shatterSnapshot.height = H * dpr;
+                shatterSnapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                var r = getCoverRect(baseImg);
+                // Draw base image
+                shatterSnapCtx.drawImage(baseImg, r.x, r.y, r.w, r.h);
+                // Mask it to only the blob area
+                shatterSnapCtx.save();
+                shatterSnapCtx.setTransform(1, 0, 0, 1, 0, 0);
+                shatterSnapCtx.globalCompositeOperation = 'destination-in';
+                shatterSnapCtx.drawImage(maskCanvas, 0, 0);
+                shatterSnapCtx.restore();
+                shatterSnapCtx.globalCompositeOperation = 'source-over';
+            }
+
+            function drawShatterParticles() {
+                var alive = false;
+                for (var i = 0; i < shatterParticles.length; i++) {
+                    var p = shatterParticles[i];
+                    if (p.alpha <= 0) continue;
+                    alive = true;
+
+                    // Physics
+                    p.vy += p.gravity;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rotation += p.rotSpeed;
+                    p.alpha -= p.fadeSpeed;
+                    if (p.alpha < 0) p.alpha = 0;
+
+                    // Draw chunk from snapshot
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                    ctx.rotate(p.rotation);
+                    ctx.drawImage(shatterSnapshot,
+                        p.srcX, p.srcY, p.srcW, p.srcH,
+                        -p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+                if (!alive) {
+                    shatterParticles = [];
+                    shatterActive = false;
+                }
+            }
 
             // ENTER BUTTON — plays 4K transition video then reveals arena
             var heroBrandText = document.getElementById('hero-brand-text');
@@ -1180,32 +1289,44 @@
                 setTimeout(function() { heroBrandText.classList.add('fading'); }, 100);
                 setTimeout(function() { touchHint.classList.add('fading'); }, 50);
 
-                // 2. Start video crossfade while canvas STILL runs underneath
-                //    The canvas stays alive so the last frame isn't frozen
+                // 2. Shatter the blob — snapshot it, clear mask, create falling particles
+                setTimeout(function() {
+                    takeShatterSnapshot();
+                    createShatterParticles();
+                    // Clear the mask so the reveal disappears (top image returns to full)
+                    maskCtx.save();
+                    maskCtx.setTransform(1, 0, 0, 1, 0, 0);
+                    maskCtx.clearRect(0, 0, W * dpr, H * dpr);
+                    maskCtx.restore();
+                    // Also clear dissipation buffer
+                    fadeCtx.save();
+                    fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
+                    fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
+                    fadeCtx.restore();
+                    // Stop cursor from painting new blobs
+                    isActive = false;
+                }, 300);
+
+                // 3. After shatter plays out, crossfade to video
                 setTimeout(function() {
                     transVideo.currentTime = 0;
                     transVideo.classList.add('playing');
                     transVideo.play().catch(function() {
-                        // Autoplay blocked — fall back to smooth CSS fade
                         revealArena();
                     });
 
-                    // 3. Once video is visually covering the canvas, we can stop later
-                    //    (canvas keeps running — video opacity transition covers it)
-
-                    // 4. When video ends, smoothly cross-fade to arena
                     transVideo.addEventListener('ended', function onEnd() {
                         transVideo.removeEventListener('ended', onEnd);
                         revealArena();
                     });
 
-                    // Safety timeout — if video stalls, force transition after 10s
+                    // Safety timeout
                     setTimeout(function() {
                         if (!hero.classList.contains('gone')) {
                             revealArena();
                         }
                     }, 10000);
-                }, 600);
+                }, 1800);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
