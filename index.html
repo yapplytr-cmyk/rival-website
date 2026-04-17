@@ -482,6 +482,7 @@
             width: 100%; height: 100%;
             z-index: 100;
             object-fit: cover;
+            object-position: center top;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.6s ease;
@@ -497,31 +498,184 @@
         /* Main site hidden initially — fades in from pure black */
         .main-site {
             opacity: 0;
-            transition: opacity 1.2s ease;
+            transition: opacity 1.5s ease;
         }
         .main-site.revealed { opacity: 1; }
 
-        /* Elements animate up from darkness once site is revealed */
-        .main-site .hero-content,
-        .main-site .navbar,
-        .main-site .phone-showcase,
-        .main-site .features-grid,
-        .main-site .stats-row {
+        /* ===== ARENA PAGE ===== */
+        .arena-page {
+            position: relative;
+            min-height: 100vh;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 60px 24px;
+        }
+        .arena-particles {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* RIVAL logo */
+        .arena-logo {
+            text-align: center;
+            z-index: 1;
             opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
+            transform: translateY(30px) scale(0.95);
+            transition: opacity 1s ease, transform 1s ease;
         }
-        .main-site.revealed .navbar {
-            opacity: 1; transform: translateY(0);
-            transition-delay: 0.3s;
-        }
-        .main-site.revealed .hero-content {
-            opacity: 1; transform: translateY(0);
+        .main-site.revealed .arena-logo {
+            opacity: 1;
+            transform: translateY(0) scale(1);
             transition-delay: 0.5s;
         }
-        .main-site.revealed .phone-showcase {
-            opacity: 1; transform: translateY(0);
-            transition-delay: 0.8s;
+        .arena-logo-text {
+            font-family: var(--font);
+            font-size: clamp(64px, 12vw, 140px);
+            font-weight: 900;
+            letter-spacing: 0.25em;
+            color: #fff;
+            text-shadow: 0 0 80px rgba(139,92,246,0.3), 0 0 160px rgba(139,92,246,0.1);
+            padding-left: 0.25em;
+        }
+        .arena-logo-line {
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(139,92,246,0.8), transparent);
+            margin: 16px auto 0;
+            transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            transition-delay: 1.2s;
+        }
+        .main-site.revealed .arena-logo-line {
+            width: 200px;
+        }
+
+        /* Tagline — words animate in one by one */
+        .arena-tagline {
+            text-align: center;
+            margin-top: 32px;
+            z-index: 1;
+            font-family: var(--font);
+            font-size: clamp(18px, 3vw, 28px);
+            font-weight: 300;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 0.05em;
+        }
+        .arena-word {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            margin: 0 4px;
+        }
+        .arena-word-accent {
+            color: #8B5CF6;
+            font-weight: 600;
+        }
+        .main-site.revealed .arena-word:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 1.0s; }
+        .main-site.revealed .arena-word:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 1.15s; }
+        .main-site.revealed .arena-word:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 1.3s; }
+        .main-site.revealed .arena-word:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 1.45s; }
+        .main-site.revealed .arena-word:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 1.6s; }
+        .main-site.revealed .arena-word:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 1.75s; }
+
+        /* Feature pills */
+        .arena-features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 48px;
+            z-index: 1;
+        }
+        .arena-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 100px;
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.6);
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+        .arena-pill:hover {
+            border-color: rgba(139,92,246,0.4);
+            background: rgba(139,92,246,0.06);
+            color: rgba(255,255,255,0.9);
+        }
+        .arena-pill svg {
+            width: 18px; height: 18px;
+            stroke: rgba(139,92,246,0.7);
+            flex-shrink: 0;
+        }
+        .main-site.revealed .arena-pill:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 2.0s; }
+        .main-site.revealed .arena-pill:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 2.15s; }
+        .main-site.revealed .arena-pill:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 2.3s; }
+        .main-site.revealed .arena-pill:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 2.45s; }
+
+        /* Download CTA */
+        .arena-cta {
+            margin-top: 56px;
+            text-align: center;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .main-site.revealed .arena-cta {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 2.8s;
+        }
+        .arena-download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            border-radius: 50px;
+            background: #fff;
+            color: #000;
+            font-family: var(--font);
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 40px rgba(255,255,255,0.08);
+        }
+        .arena-download-btn svg {
+            width: 20px; height: 20px;
+        }
+        .arena-download-btn:hover {
+            transform: scale(1.06) translateY(-2px);
+            box-shadow: 0 0 60px rgba(255,255,255,0.15), 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .arena-sub {
+            margin-top: 12px;
+            font-family: var(--font);
+            font-size: 13px;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            .arena-features { gap: 8px; }
+            .arena-pill { padding: 8px 14px; font-size: 12px; }
+            .arena-pill svg { width: 14px; height: 14px; }
+            .arena-download-btn { padding: 14px 32px; font-size: 14px; }
         }
 
         /* RESPONSIVE */
@@ -597,271 +751,59 @@
         </div>
     </section>
 
-    <!-- ========== MAIN SITE (revealed after Enter) ========== -->
+    <!-- ========== ARENA PAGE (revealed after Enter) ========== -->
     <div class="main-site" id="main-site">
+        <div class="arena-page">
 
-    <!-- Background orbs -->
-    <div class="bg-orbs">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-    </div>
+            <!-- Floating particles for atmosphere -->
+            <canvas class="arena-particles" id="arena-particles"></canvas>
 
-    <!-- Navbar -->
-    <nav class="navbar">
-        <a href="#" class="nav-logo">
-            <img src="assets/app-icon.png" alt="Rival">
-            <span>RIVAL</span>
-        </a>
-        <div class="nav-right">
-            <div class="theme-switcher">
-                <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')" title="Dark"></button>
-                <button class="theme-btn" data-theme="orange" onclick="setTheme('orange')" title="Flame"></button>
-                <button class="theme-btn" data-theme="purple" onclick="setTheme('purple')" title="Ultra"></button>
+            <!-- Main RIVAL logo reveal -->
+            <div class="arena-logo" id="arena-logo">
+                <div class="arena-logo-text">RIVAL</div>
+                <div class="arena-logo-line"></div>
             </div>
-            <a href="#" class="nav-cta" id="nav-download">Download</a>
-        </div>
-    </nav>
 
-    <!-- Hero -->
-    <section class="hero">
-        <div class="floating-avatars">
-            <img class="float-avatar" src="assets/cat-devil.png" alt="">
-            <img class="float-avatar" src="assets/cat-king.png" alt="">
-            <img class="float-avatar" src="assets/cat-ninja.png" alt="">
-            <img class="float-avatar" src="assets/cat-cyber.png" alt="">
-            <img class="float-avatar" src="assets/cat-angel.png" alt="">
-            <img class="float-avatar" src="assets/cat-wink.png" alt="">
-        </div>
-
-        <div class="hero-content">
-            <div class="hero-badge glass">
-                <span class="dot"></span>
-                Available on iOS
+            <!-- Tagline -->
+            <div class="arena-tagline" id="arena-tagline">
+                <span class="arena-word">Turn</span>
+                <span class="arena-word">Every</span>
+                <span class="arena-word">Workout</span>
+                <span class="arena-word">Into</span>
+                <span class="arena-word">A</span>
+                <span class="arena-word arena-word-accent">Battle</span>
             </div>
-            <h1>Turn Every Workout<br>Into a <span class="accent">Battle</span></h1>
-            <p class="hero-sub">Challenge friends to real-time GPS races. Track each other live. Climb the ranks. Prove who's the real rival.</p>
-            <div class="hero-cta-row">
-                <a href="#" class="btn-download" id="hero-download">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+
+            <!-- Feature pills -->
+            <div class="arena-features" id="arena-features">
+                <div class="arena-pill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Real-Time GPS Racing
+                </div>
+                <div class="arena-pill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/></svg>
+                    Competitive Rankings
+                </div>
+                <div class="arena-pill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M12 7V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"/><circle cx="12" cy="14" r="3"/></svg>
+                    Apple Watch
+                </div>
+                <div class="arena-pill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    Share Cards
+                </div>
+            </div>
+
+            <!-- Download CTA -->
+            <div class="arena-cta" id="arena-cta">
+                <a href="#" class="arena-download-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                     Download for iOS
                 </a>
-                <a href="#features" class="btn-secondary">Learn More</a>
+                <div class="arena-sub">Free on the App Store</div>
             </div>
+
         </div>
-    </section>
-
-    <!-- Phone Mockup -->
-    <section class="phone-showcase scale-in">
-        <div class="phone-frame glass">
-            <div class="phone-screen">
-                <div class="mock-header">R I V A L</div>
-                <div style="text-align:center">
-                    <span class="mock-live-dot"></span>
-                    <span class="mock-live-label">LIVE RACE</span>
-                </div>
-                <div class="mock-vs">
-                    <div class="mock-player">
-                        <img src="assets/cat-king.png" alt="Player 1">
-                        <div class="name">You</div>
-                        <div class="stat">2.4 km</div>
-                    </div>
-                    <div class="mock-vs-text">VS</div>
-                    <div class="mock-player">
-                        <img src="assets/cat-devil.png" alt="Player 2">
-                        <div class="name">Rival</div>
-                        <div class="stat">2.1 km</div>
-                    </div>
-                </div>
-                <div class="mock-stats-row">
-                    <div class="mock-stat-item"><div class="val">12:34</div><div class="lbl">TIME</div></div>
-                    <div class="mock-stat-item"><div class="val">152</div><div class="lbl">BPM</div></div>
-                    <div class="mock-stat-item"><div class="val">5:08</div><div class="lbl">PACE</div></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section class="features" id="features">
-        <div class="section-label fade-in">Features</div>
-        <h2 class="section-title fade-in">Everything You Need to Dominate</h2>
-        <div class="features-grid">
-            <div class="feature-card glass">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <h3>Real-Time Racing</h3>
-                <p>Go head-to-head with friends in live GPS-tracked races. See their distance, pace, and heart rate as it happens.</p>
-            </div>
-            <div class="feature-card glass">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/><path d="M8 9h8a4 4 0 0 1 0 8H8a4 4 0 0 1 0-8Z"/></svg>
-                </div>
-                <h3>Competitive Rankings</h3>
-                <p>Climb from Underdog to Legend. Every win boosts your rank score. Every loss pushes you to go harder.</p>
-            </div>
-            <div class="feature-card glass">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="var(--accent)" fill="none"/><circle cx="9" cy="10" r="1.5" fill="var(--accent)" stroke="none"/><circle cx="15" cy="10" r="1.5" fill="var(--accent)" stroke="none"/><path d="M8.5 14.5c0 0 1.5 2 3.5 2s3.5-2 3.5-2"/></svg>
-                </div>
-                <h3>Cat Avatars</h3>
-                <p>Collect and customize unique cat avatars. Show your personality on the battlefield. Unlock rare characters.</p>
-            </div>
-            <div class="feature-card glass">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                </div>
-                <h3>Live Stats</h3>
-                <p>Distance, pace, heart rate, calories, elevation -- all tracked live and synced between both racers in real-time.</p>
-            </div>
-            <div class="feature-card glass">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                </div>
-                <h3>Share Your Wins</h3>
-                <p>Generate premium share cards with your race results. Post to stories and show the world who won.</p>
-            </div>
-            <div class="feature-card glass">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M12 7V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"/><circle cx="12" cy="14" r="3"/></svg>
-                </div>
-                <h3>Apple Watch</h3>
-                <p>Full Apple Watch companion app. Track directly from your wrist with live heart rate and rival data.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="how-it-works">
-        <div class="section-label fade-in">How It Works</div>
-        <h2 class="section-title fade-in">Three Steps to Glory</h2>
-        <div class="steps">
-            <div class="step">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <h3>Challenge a Friend</h3>
-                    <p>Pick a sport, set the distance or time, and send the challenge. They accept -- game on.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <h3>Race Live</h3>
-                    <p>Both start at the same time. Watch each other's progress in real-time. GPS, heart rate, pace -- all live.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    <h3>Win and Rank Up</h3>
-                    <p>Cross the finish line first. Earn rank points, share your victory card, and climb the leaderboard.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Avatar Marquee -->
-    <section class="avatar-section fade-in">
-        <div class="section-label" style="padding: 0 24px; margin-bottom: 32px;">Choose Your Fighter</div>
-        <div class="avatar-marquee" id="avatar-marquee">
-            <img src="assets/cat-devil.png" alt="Devil">
-            <img src="assets/cat-king.png" alt="King">
-            <img src="assets/cat-ninja.png" alt="Ninja">
-            <img src="assets/cat-cyber.png" alt="Cyber">
-            <img src="assets/cat-angel.png" alt="Angel">
-            <img src="assets/cat-explorer.png" alt="Explorer">
-            <img src="assets/cat-wink.png" alt="Wink">
-            <img src="assets/cat-grumpy.png" alt="Grumpy">
-            <img src="assets/cat-dj.png" alt="DJ">
-            <img src="assets/cat-pixel.png" alt="Pixel">
-            <img src="assets/cat-sleepy.png" alt="Sleepy">
-            <img src="assets/cat-golf.png" alt="Golf">
-            <img src="assets/cat-planet.png" alt="Planet">
-            <img src="assets/cat-matrix.png" alt="Matrix">
-            <img src="assets/cat-friends.png" alt="Friends">
-            <img src="assets/ranks/1.png" alt="Breakout">
-            <img src="assets/ranks/2.png" alt="Ace">
-            <img src="assets/ranks/3.png" alt="Ace">
-            <img src="assets/ranks/4.png" alt="Ace">
-            <img src="assets/ranks/5.png" alt="Contender">
-            <img src="assets/ranks/13.png" alt="Mythic">
-            <img src="assets/ranks/15.png" alt="Legend">
-            <img src="assets/ranks/18.png" alt="Mythic">
-            <img src="assets/ranks/20.png" alt="Mythic">
-            <img src="assets/ranks/24.png" alt="Legend">
-            <!-- Duplicate for seamless loop -->
-            <img src="assets/cat-devil.png" alt="Devil">
-            <img src="assets/cat-king.png" alt="King">
-            <img src="assets/cat-ninja.png" alt="Ninja">
-            <img src="assets/cat-cyber.png" alt="Cyber">
-            <img src="assets/cat-angel.png" alt="Angel">
-            <img src="assets/cat-explorer.png" alt="Explorer">
-            <img src="assets/cat-wink.png" alt="Wink">
-            <img src="assets/cat-grumpy.png" alt="Grumpy">
-            <img src="assets/cat-dj.png" alt="DJ">
-            <img src="assets/cat-pixel.png" alt="Pixel">
-            <img src="assets/cat-sleepy.png" alt="Sleepy">
-            <img src="assets/cat-golf.png" alt="Golf">
-            <img src="assets/cat-planet.png" alt="Planet">
-            <img src="assets/cat-matrix.png" alt="Matrix">
-            <img src="assets/cat-friends.png" alt="Friends">
-            <img src="assets/ranks/1.png" alt="Breakout">
-            <img src="assets/ranks/2.png" alt="Ace">
-            <img src="assets/ranks/3.png" alt="Ace">
-            <img src="assets/ranks/4.png" alt="Ace">
-            <img src="assets/ranks/5.png" alt="Contender">
-            <img src="assets/ranks/13.png" alt="Mythic">
-            <img src="assets/ranks/15.png" alt="Legend">
-            <img src="assets/ranks/18.png" alt="Mythic">
-            <img src="assets/ranks/20.png" alt="Mythic">
-            <img src="assets/ranks/24.png" alt="Legend">
-        </div>
-    </section>
-
-    <!-- Stats -->
-    <section class="stats-bar">
-        <div class="stats-row glass">
-            <div class="stat-block">
-                <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
-                <div class="num">7+</div>
-                <div class="label">SPORTS</div>
-            </div>
-            <div class="stat-block">
-                <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-                <div class="num">LIVE</div>
-                <div class="label">GPS TRACKING</div>
-            </div>
-            <div class="stat-block">
-                <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M12 7V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"/><circle cx="12" cy="14" r="3"/></svg></div>
-                <div class="num">YES</div>
-                <div class="label">APPLE WATCH</div>
-            </div>
-            <div class="stat-block">
-                <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>
-                <div class="num">PRO</div>
-                <div class="label">SHARE CARDS</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Final CTA -->
-    <section class="cta-section fade-in">
-        <div class="cta-card glass">
-            <h2>Ready to Compete?</h2>
-            <p>Download Rival and start racing your friends today. It's free.</p>
-            <a href="#" class="btn-download" id="cta-download">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                Download for iOS
-            </a>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>2026 Rival. All rights reserved.</p>
-    </footer>
-
     </div><!-- end .main-site -->
 
     <script>
@@ -900,15 +842,18 @@
             var isActive = false;
             var frame = 0;
 
-            // Organic blob — 14 control points with wobble for living liquid shape
-            var blobN = 14;
+            // Organic blob — 16 control points with lively wobble for liquid shape
+            var blobN = 16;
             var blobOffsets = [];
             for (var i = 0; i < blobN; i++) {
                 blobOffsets.push({
-                    base: (Math.random() - 0.5) * 0.22,
+                    base: (Math.random() - 0.5) * 0.28,
                     phase: Math.random() * Math.PI * 2,
-                    speed: 0.015 + Math.random() * 0.025,
-                    amp: 0.04 + Math.random() * 0.06
+                    speed: 0.025 + Math.random() * 0.04,
+                    amp: 0.06 + Math.random() * 0.09,
+                    phase2: Math.random() * Math.PI * 2,
+                    speed2: 0.01 + Math.random() * 0.015,
+                    amp2: 0.03 + Math.random() * 0.04
                 });
             }
 
@@ -960,24 +905,27 @@
                 isActive = true;
             });
 
-            // Draw organic wobbly blob shape — Catmull-Rom spline with living wobble
+            // Draw organic wobbly blob shape — Catmull-Rom spline with layered wobble
             function drawOrganicBlob(targetCtx, cx, cy, radius, vx, vy) {
                 var speed = Math.sqrt(vx * vx + vy * vy);
                 var nx = speed > 0.5 ? vx / speed : 0;
                 var ny = speed > 0.5 ? vy / speed : 0;
-                var stretch = Math.min(speed * 0.5, radius * 0.3);
-                var squish = Math.min(speed * 0.12, radius * 0.08);
+                var stretch = Math.min(speed * 0.6, radius * 0.35);
+                var squish = Math.min(speed * 0.15, radius * 0.1);
 
                 var pts = [];
                 for (var i = 0; i < blobN; i++) {
                     var angle = (i / blobN) * Math.PI * 2;
                     var cosA = Math.cos(angle), sinA = Math.sin(angle);
                     var o = blobOffsets[i];
-                    var wobble = o.base + Math.sin(frame * o.speed + o.phase) * o.amp;
+                    // Two layers of wobble — fast jitter + slow undulation = organic liquid
+                    var wobble = o.base
+                        + Math.sin(frame * o.speed + o.phase) * o.amp
+                        + Math.sin(frame * o.speed2 + o.phase2) * o.amp2;
                     var dot = cosA * nx + sinA * ny;
                     var cross = Math.abs(-sinA * nx + cosA * ny);
                     var r = radius * (1 + wobble) + dot * stretch - cross * squish;
-                    r = Math.max(radius * 0.65, r);
+                    r = Math.max(radius * 0.6, r);
                     pts.push({ x: cx + cosA * r, y: cy + sinA * r });
                 }
 
@@ -1076,14 +1024,17 @@
                         for (var i = 0; i < trail.length; i++) pathPts.push(trail[i]);
                         if (isActive && smoothX > -500) pathPts.push({ x: smoothX, y: smoothY, age: 0 });
 
-                        // Soft feathered edge: multiple passes from thick+transparent to thin+opaque
+                        // Many soft passes = very smooth feathered edges like liquid
                         var passes = [
-                            { widthMul: 1.6, alpha: 0.06 },
-                            { widthMul: 1.35, alpha: 0.12 },
-                            { widthMul: 1.15, alpha: 0.25 },
-                            { widthMul: 0.95, alpha: 0.5 },
-                            { widthMul: 0.7, alpha: 0.85 },
-                            { widthMul: 0.45, alpha: 1.0 }
+                            { widthMul: 2.2, alpha: 0.02 },
+                            { widthMul: 1.9, alpha: 0.04 },
+                            { widthMul: 1.65, alpha: 0.07 },
+                            { widthMul: 1.45, alpha: 0.12 },
+                            { widthMul: 1.25, alpha: 0.2 },
+                            { widthMul: 1.08, alpha: 0.35 },
+                            { widthMul: 0.9, alpha: 0.55 },
+                            { widthMul: 0.7, alpha: 0.8 },
+                            { widthMul: 0.5, alpha: 1.0 }
                         ];
 
                         octx.lineCap = 'round';
@@ -1099,12 +1050,15 @@
 
                     // CURSOR BLOB — organic wobbly shape, not a circle
                     if (isActive && smoothX > -500) {
-                        // Multi-pass for soft edge on cursor blob too
+                        // Many soft passes for ultra-smooth feathered edge
                         var blobPasses = [
-                            { scale: 1.35, alpha: 0.08 },
-                            { scale: 1.2, alpha: 0.2 },
-                            { scale: 1.08, alpha: 0.5 },
-                            { scale: 1.0, alpha: 1.0 }
+                            { scale: 1.5, alpha: 0.02 },
+                            { scale: 1.38, alpha: 0.05 },
+                            { scale: 1.27, alpha: 0.1 },
+                            { scale: 1.18, alpha: 0.2 },
+                            { scale: 1.1, alpha: 0.4 },
+                            { scale: 1.03, alpha: 0.7 },
+                            { scale: 0.97, alpha: 1.0 }
                         ];
                         for (var p = 0; p < blobPasses.length; p++) {
                             octx.globalAlpha = blobPasses[p].alpha;
@@ -1177,64 +1131,56 @@
             document.body.style.overflow = 'hidden';
         })();
 
-        // Theme Switching
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            document.querySelectorAll('.theme-btn').forEach(function(btn) {
-                btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
-            });
-            localStorage.setItem('rival-theme', theme);
-        }
-        (function() { var saved = localStorage.getItem('rival-theme'); if (saved) setTheme(saved); })();
+        // ========== ARENA PARTICLE ANIMATION ==========
+        (function() {
+            var pc = document.getElementById('arena-particles');
+            if (!pc) return;
+            var pctx = pc.getContext('2d');
+            var particles = [];
+            var particleCount = 60;
 
-        // Scroll Animations — IntersectionObserver
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    // stagger steps
-                    var steps = entry.target.querySelectorAll('.step');
-                    steps.forEach(function(step, i) {
-                        setTimeout(function() { step.classList.add('visible'); }, i * 200);
-                    });
-                }
-            });
-        }, { threshold: 0.12 });
-
-        document.querySelectorAll('.fade-in, .slide-left, .slide-right, .scale-in, .features-grid, .stats-row').forEach(function(el) {
-            observer.observe(el);
-        });
-
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(function(a) {
-            a.addEventListener('click', function(e) {
-                var target = document.querySelector(this.getAttribute('href'));
-                if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
-            });
-        });
-
-        // Parallax orbs
-        if (window.innerWidth > 768) {
-            document.addEventListener('mousemove', function(e) {
-                var x = (e.clientX / window.innerWidth - 0.5) * 20;
-                var y = (e.clientY / window.innerHeight - 0.5) * 20;
-                document.querySelectorAll('.orb').forEach(function(orb, i) {
-                    var factor = (i + 1) * 0.5;
-                    orb.style.transform = 'translate(' + (x * factor) + 'px, ' + (y * factor) + 'px)';
-                });
-            });
-        }
-
-        // Navbar scroll
-        window.addEventListener('scroll', function() {
-            var nav = document.querySelector('.navbar');
-            var theme = document.documentElement.getAttribute('data-theme');
-            if (window.scrollY > 50) {
-                nav.style.background = getComputedStyle(document.documentElement).getPropertyValue('--navbar-bg-scroll');
-            } else {
-                nav.style.background = getComputedStyle(document.documentElement).getPropertyValue('--navbar-bg');
+            function resizeParticles() {
+                pc.width = window.innerWidth;
+                pc.height = window.innerHeight;
             }
-        });
+            resizeParticles();
+            window.addEventListener('resize', resizeParticles);
+
+            for (var i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: -0.15 - Math.random() * 0.35,
+                    size: 1 + Math.random() * 2,
+                    alpha: 0.1 + Math.random() * 0.3,
+                    pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.01 + Math.random() * 0.02
+                });
+            }
+
+            function animateParticles() {
+                pctx.clearRect(0, 0, pc.width, pc.height);
+                for (var i = 0; i < particles.length; i++) {
+                    var p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.pulse += p.pulseSpeed;
+                    var a = p.alpha * (0.5 + 0.5 * Math.sin(p.pulse));
+
+                    if (p.y < -10) { p.y = pc.height + 10; p.x = Math.random() * pc.width; }
+                    if (p.x < -10) p.x = pc.width + 10;
+                    if (p.x > pc.width + 10) p.x = -10;
+
+                    pctx.beginPath();
+                    pctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    pctx.fillStyle = 'rgba(139,92,246,' + a.toFixed(3) + ')';
+                    pctx.fill();
+                }
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        })();
     </script>
 </body>
 </html>
