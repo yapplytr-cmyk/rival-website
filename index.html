@@ -857,17 +857,26 @@
 
             // Trail of recent cursor positions for liquid brush smear
             var trail = []; // { x, y, vx, vy, age }
-            var maxTrail = 20; // how many trail blobs
-            var trailLifetime = 25; // frames before a trail point fades completely
+            var maxTrail = 50; // longer trail — more drips
+            var trailLifetime = 80; // much slower fade — water dripping off
 
             // Smooth cursor
             var targetX = -999, targetY = -999;
             var smoothX = -999, smoothY = -999;
             var prevX = -999, prevY = -999;
             var isActive = false;
+            var frame = 0; // for subtle wobble animation tied to movement
 
-            // Blob points for liquid shape
-            var blobPoints = 16;
+            // Blob points for liquid shape — irregular offsets so it's NEVER a circle
+            var blobPoints = 20;
+            var blobBaseOffsets = []; // permanent random offsets per point
+            for (var i = 0; i < blobPoints; i++) {
+                blobBaseOffsets.push({
+                    offset: (Math.random() - 0.5) * 0.35, // -0.175 to +0.175 of radius
+                    wobblePhase: Math.random() * Math.PI * 2,
+                    wobbleAmp: 0.03 + Math.random() * 0.06 // subtle living wobble
+                });
+            }
 
             function resize() {
                 dpr = window.devicePixelRatio || 1;
@@ -916,53 +925,48 @@
                 isActive = true;
             });
 
-            // Draw a distorted liquid blob — stretches based on velocity
-            function drawLiquidBlob(cx, cy, radius, vx, vy, alpha) {
+            // Draw an organic water blob — never circular, stretches with velocity
+            function drawLiquidBlob(cx, cy, radius, vx, vy, useOffsets) {
                 var speed = Math.sqrt(vx * vx + vy * vy);
-                // Normalize velocity direction
                 var nx = speed > 0.5 ? vx / speed : 0;
                 var ny = speed > 0.5 ? vy / speed : 0;
-                // Stretch factor based on speed
-                var stretch = Math.min(speed * 1.2, radius * 0.8);
-                // Perpendicular squish
-                var squish = Math.min(speed * 0.3, radius * 0.25);
+                var stretch = Math.min(speed * 1.8, radius * 1.0);
+                var squish = Math.min(speed * 0.4, radius * 0.3);
 
-                ctx.beginPath();
-                for (var i = 0; i <= blobPoints; i++) {
-                    var idx = i % blobPoints;
-                    var angle = (idx / blobPoints) * Math.PI * 2;
+                var points = [];
+                for (var i = 0; i < blobPoints; i++) {
+                    var angle = (i / blobPoints) * Math.PI * 2;
                     var cosA = Math.cos(angle);
                     var sinA = Math.sin(angle);
 
-                    // Dot product with velocity direction = how aligned this point is
+                    // Base irregular shape — NEVER a perfect circle
+                    var baseOffset = useOffsets ? blobBaseOffsets[i].offset * radius : 0;
+                    // Subtle organic wobble tied to frame count (only moves when mouse moves)
+                    var wobble = useOffsets ? Math.sin(frame * 0.03 + blobBaseOffsets[i].wobblePhase) * blobBaseOffsets[i].wobbleAmp * radius : 0;
+
+                    // Velocity-based distortion
                     var dot = cosA * nx + sinA * ny;
-                    // Cross product = perpendicular component
                     var cross = Math.abs(-sinA * nx + cosA * ny);
 
-                    // Stretch in movement direction, squish perpendicular
-                    var r = radius + dot * stretch - cross * squish;
-                    r = Math.max(radius * 0.5, r);
+                    var r = radius + baseOffset + wobble + dot * stretch - cross * squish;
+                    r = Math.max(radius * 0.4, r);
 
-                    var x = cx + cosA * r;
-                    var y = cy + sinA * r;
+                    points.push({ x: cx + cosA * r, y: cy + sinA * r });
+                }
 
-                    if (i === 0) { ctx.moveTo(x, y); }
-                    else {
-                        // Previous point for smooth curve
-                        var prevIdx = (idx - 1 + blobPoints) % blobPoints;
-                        var prevAngle = (prevIdx / blobPoints) * Math.PI * 2;
-                        var pCos = Math.cos(prevAngle), pSin = Math.sin(prevAngle);
-                        var pDot = pCos * nx + pSin * ny;
-                        var pCross = Math.abs(-pSin * nx + pCos * ny);
-                        var pR = radius + pDot * stretch - pCross * squish;
-                        pR = Math.max(radius * 0.5, pR);
-                        var px = cx + pCos * pR;
-                        var py = cy + pSin * pR;
-                        // Midpoint for quadratic smoothing
-                        var mx = (px + x) / 2;
-                        var my = (py + y) / 2;
-                        ctx.quadraticCurveTo(px, py, mx, my);
-                    }
+                // Catmull-Rom splines for ultra-smooth organic curves
+                ctx.beginPath();
+                for (var i = 0; i < points.length; i++) {
+                    var p0 = points[(i - 1 + points.length) % points.length];
+                    var p1 = points[i];
+                    var p2 = points[(i + 1) % points.length];
+                    var p3 = points[(i + 2) % points.length];
+                    if (i === 0) ctx.moveTo(p1.x, p1.y);
+                    ctx.bezierCurveTo(
+                        p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6,
+                        p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6,
+                        p2.x, p2.y
+                    );
                 }
                 ctx.closePath();
             }
@@ -980,16 +984,32 @@
                 var vy = smoothY - prevY;
                 var speed = Math.sqrt(vx * vx + vy * vy);
 
-                // Add to trail only when moving enough
-                if (isActive && speed > 1.5) {
-                    trail.push({ x: smoothX, y: smoothY, vx: vx, vy: vy, age: 0, radius: blobRadius });
+                // Increment frame (for wobble)
+                if (speed > 0.5) frame++;
+
+                // Add to trail when moving — drop water blobs behind
+                if (isActive && speed > 1) {
+                    trail.push({
+                        x: smoothX, y: smoothY,
+                        vx: vx * 0.3, vy: vy * 0.3, // initial drift velocity (slowing)
+                        age: 0,
+                        radius: blobRadius * (0.6 + Math.random() * 0.4), // varied sizes
+                        gravity: 0.15 + Math.random() * 0.2 // water drops fall
+                    });
                     if (trail.length > maxTrail) trail.shift();
                 }
 
-                // Age all trail points
+                // Age & drift trail points — they slow down and drip with gravity
                 for (var i = trail.length - 1; i >= 0; i--) {
-                    trail[i].age++;
-                    if (trail[i].age > trailLifetime) {
+                    var t = trail[i];
+                    t.age++;
+                    // Drift: slow down and fall like water
+                    t.x += t.vx;
+                    t.y += t.vy + t.gravity; // gravity pulls drops down
+                    t.vx *= 0.96; // friction
+                    t.vy *= 0.96;
+                    t.gravity += 0.03; // accelerating drip
+                    if (t.age > trailLifetime) {
                         trail.splice(i, 1);
                     }
                 }
