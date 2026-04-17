@@ -727,6 +727,20 @@
             50% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
         }
 
+        /* Feature section particles — fixed overlay across all feature pages */
+        .feature-particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .feature-particles.active {
+            opacity: 1;
+        }
+
         /* Particle canvas for explain section */
         .explain-particles {
             position: absolute;
@@ -1177,18 +1191,20 @@
             transform: translateY(0);
         }
         .feature-icon-wrap {
-            width: 56px; height: 56px;
-            border-radius: 16px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: none;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 24px;
         }
-        .feature-icon-wrap svg {
-            width: 28px; height: 28px;
-            stroke: rgba(120,160,255,0.6);
+        .feature-icon-wrap img {
+            width: 80px; height: 80px;
+            object-fit: contain;
+            border-radius: 50%;
+            filter: drop-shadow(0 0 16px rgba(100,140,255,0.2));
         }
         .feature-title {
             font-family: var(--font);
@@ -1230,16 +1246,7 @@
             margin: 0 auto;
         }
         .fv-phone-mockup::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 50%;
-            transform: translateX(-50%);
-            width: 80px; height: 20px;
-            background: #000;
-            border-radius: 0 0 14px 14px;
-            z-index: 2;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-top: none;
+            display: none;
         }
         .fv-video {
             width: 100%;
@@ -1517,11 +1524,14 @@
             </div>
         </div>
 
+        <!-- Feature section particles canvas -->
+        <canvas class="feature-particles" id="feature-particles"></canvas>
+
         <!-- SCREEN 3: Feature page — Race Head-to-Head -->
         <div class="feature-page" id="feature-race">
             <div class="feature-page-inner">
                 <div class="feature-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <img src="assets/cat-explorer.png" alt="Scout">
                 </div>
                 <h3 class="feature-title">Race Head-to-Head</h3>
                 <p class="feature-desc">Challenge rivals anywhere in the world to real-time GPS races. Track each other live on the map as you compete stride for stride.</p>
@@ -1543,7 +1553,7 @@
         <div class="feature-page" id="feature-meetup">
             <div class="feature-page-inner">
                 <div class="feature-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <img src="assets/cat-devil.png" alt="Devil">
                 </div>
                 <h3 class="feature-title">Meet Nearby Rivals</h3>
                 <p class="feature-desc">Discover competitors in your area. Find someone to race against, meetup, and settle the score in person.</p>
@@ -1565,7 +1575,7 @@
         <div class="feature-page" id="feature-ranks">
             <div class="feature-page-inner">
                 <div class="feature-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.88 4 7 5.12 7 6.5V9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.12 4 17 5.12 17 6.5V9"/><path d="M4 22h16"/><path d="M10 22V9"/><path d="M14 22V9"/></svg>
+                    <img src="assets/ranks/10.png" alt="Ember">
                 </div>
                 <h3 class="feature-title">Climb the Ranks</h3>
                 <p class="feature-desc">Rise through 6 tiers from Underdog to Mythic. Every win earns points, unlocks exclusive cat avatars, and pushes you closer to the top.</p>
@@ -1592,13 +1602,14 @@
                 <h3 class="feature-title">Ghost Mode</h3>
                 <p class="feature-desc">Race against your past self. Your ghost runs your best route — can you beat it? Push your limits every single run.</p>
 
+                <div class="rival-cta-text" style="font-family:var(--font);font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.9);font-size:clamp(16px,2.5vw,22px);margin:48px 0 32px;">Are you ready to face your rival?</div>
+
                 <!-- Big final download CTA -->
                 <div class="final-download">
                     <a href="#" class="final-download-btn">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                         Download on the App Store
                     </a>
-                    <div class="final-download-sub">Free — No ads, no subscriptions</div>
                 </div>
             </div>
         </div>
@@ -2158,6 +2169,228 @@
                     if (firstFeature) firstFeature.scrollIntoView({ behavior: 'smooth' });
                 });
             }
+        })();
+    </script>
+    <script>
+        // ========== FEATURE PAGES PARTICLE SYSTEM ==========
+        // Particles flow across feature pages, drift toward phones, converge into download button on Ghost page
+        (function() {
+            var canvas = document.getElementById('feature-particles');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var W, H;
+            var particles = [];
+            var PARTICLE_COUNT = 100;
+            var scrollProgress = 0; // 0 = first feature page, 1 = ghost page
+            var isActive = false;
+            var ghostPageActive = false;
+            var convergeTarget = null; // {x, y} of the download button
+            var convergeProgress = 0; // 0 = normal, 1 = fully converged
+
+            function resize() {
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = W;
+                canvas.height = H;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Create particles
+            for (var i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    baseVx: (Math.random() - 0.5) * 0.4,
+                    baseVy: -0.1 - Math.random() * 0.3,
+                    vx: 0,
+                    vy: 0,
+                    size: 1 + Math.random() * 2.5,
+                    baseAlpha: 0.08 + Math.random() * 0.25,
+                    alpha: 0,
+                    pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.008 + Math.random() * 0.02,
+                    hue: Math.random() > 0.5 ? 0 : 1 // 0=purple(139,92,246), 1=blue(100,140,255)
+                });
+            }
+
+            // Track which feature pages are visible and scroll position
+            var featureRace = document.getElementById('feature-race');
+            var featureGhost = document.getElementById('feature-ghost');
+            var finalBtn = document.querySelector('.final-download-btn');
+
+            // Detect when feature section is in viewport
+            var featureObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.target.id === 'feature-race' && e.isIntersecting) isActive = true;
+                    if (e.target.id === 'feature-ghost') {
+                        ghostPageActive = e.isIntersecting;
+                        if (!e.isIntersecting) convergeProgress = 0;
+                    }
+                });
+            }, { threshold: 0.05 });
+
+            if (featureRace) featureObserver.observe(featureRace);
+            if (featureGhost) featureObserver.observe(featureGhost);
+
+            // Also hide when we scroll back above feature pages
+            var explainSection = document.getElementById('arena-explain');
+            if (explainSection) {
+                var hideObserver = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(e) {
+                        if (e.isIntersecting && e.intersectionRatio > 0.5) isActive = false;
+                    });
+                }, { threshold: 0.5 });
+                hideObserver.observe(explainSection);
+            }
+
+            // Calculate scroll progress through feature pages
+            function updateScrollProgress() {
+                if (!featureRace || !featureGhost) return;
+                var raceTop = featureRace.getBoundingClientRect().top;
+                var ghostBottom = featureGhost.getBoundingClientRect().bottom;
+                var totalHeight = ghostBottom - raceTop;
+                var viewH = window.innerHeight;
+                // Progress: 0 when race page top is at viewport bottom, 1 when ghost bottom is at viewport top
+                var progress = 1 - (ghostBottom / (totalHeight + viewH));
+                scrollProgress = Math.max(0, Math.min(1, progress));
+            }
+
+            // Get converge target position
+            function getConvergeTarget() {
+                if (!finalBtn) return null;
+                var rect = finalBtn.getBoundingClientRect();
+                return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                // Toggle canvas visibility
+                if (isActive) {
+                    canvas.classList.add('active');
+                } else {
+                    canvas.classList.remove('active');
+                    return; // Skip rendering when not visible
+                }
+
+                ctx.clearRect(0, 0, W, H);
+                updateScrollProgress();
+
+                // Converge animation on ghost page
+                if (ghostPageActive) {
+                    convergeTarget = getConvergeTarget();
+                    convergeProgress = Math.min(1, convergeProgress + 0.008);
+                } else {
+                    convergeProgress = Math.max(0, convergeProgress - 0.02);
+                    convergeTarget = null;
+                }
+
+                // Eased converge
+                var convergeEased = convergeProgress * convergeProgress * convergeProgress;
+
+                // Phone mockup center positions for attraction (approximate viewport center)
+                var attractX = W / 2;
+                var attractY = H / 2;
+
+                // Dynamic particle count increases with scroll
+                var activeCount = Math.floor(PARTICLE_COUNT * (0.5 + scrollProgress * 0.5));
+
+                for (var i = 0; i < particles.length; i++) {
+                    var p = particles[i];
+
+                    // Only show up to activeCount particles
+                    if (i >= activeCount && convergeEased < 0.1) {
+                        p.alpha = Math.max(0, p.alpha - 0.01);
+                        if (p.alpha <= 0) continue;
+                    }
+
+                    p.pulse += p.pulseSpeed;
+                    var pulseAlpha = 0.5 + 0.5 * Math.sin(p.pulse);
+
+                    if (convergeTarget && convergeEased > 0.05) {
+                        // Converge toward download button
+                        var dx = convergeTarget.x - p.x;
+                        var dy = convergeTarget.y - p.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        var speed = convergeEased * 0.06;
+
+                        p.vx = p.baseVx * (1 - convergeEased) + (dx / dist) * speed * dist * 0.02;
+                        p.vy = p.baseVy * (1 - convergeEased) + (dy / dist) * speed * dist * 0.02;
+
+                        // Clamp speed
+                        var maxV = 3 + convergeEased * 5;
+                        var vel = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                        if (vel > maxV) { p.vx = (p.vx / vel) * maxV; p.vy = (p.vy / vel) * maxV; }
+
+                        // Particles near the button get brighter
+                        if (dist < 80) {
+                            p.alpha = p.baseAlpha * (1.5 + convergeEased) * pulseAlpha;
+                            p.size = Math.max(0.5, p.size * 0.995); // shrink as they arrive
+                        } else {
+                            p.alpha = p.baseAlpha * (0.8 + convergeEased * 0.5) * pulseAlpha;
+                        }
+                    } else {
+                        // Normal drift with slight attraction to center (phones)
+                        var dxCenter = attractX - p.x;
+                        var dyCenter = attractY - p.y;
+                        var attractStrength = scrollProgress * 0.0003;
+
+                        p.vx = p.baseVx + dxCenter * attractStrength;
+                        p.vy = p.baseVy + dyCenter * attractStrength;
+                        p.alpha = p.baseAlpha * (0.6 + scrollProgress * 0.6) * pulseAlpha;
+                    }
+
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Wrap around
+                    if (p.y < -20) { p.y = H + 20; p.x = Math.random() * W; }
+                    if (p.y > H + 20) { p.y = -20; p.x = Math.random() * W; }
+                    if (p.x < -20) p.x = W + 20;
+                    if (p.x > W + 20) p.x = -20;
+
+                    // Draw
+                    if (p.alpha <= 0.001) continue;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    if (p.hue === 0) {
+                        ctx.fillStyle = 'rgba(139,92,246,' + p.alpha.toFixed(3) + ')';
+                    } else {
+                        ctx.fillStyle = 'rgba(100,140,255,' + p.alpha.toFixed(3) + ')';
+                    }
+                    ctx.fill();
+
+                    // Glow effect for converging particles
+                    if (convergeEased > 0.3 && p.alpha > 0.15) {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+                        var glowA = p.alpha * 0.15 * convergeEased;
+                        if (p.hue === 0) {
+                            ctx.fillStyle = 'rgba(139,92,246,' + glowA.toFixed(3) + ')';
+                        } else {
+                            ctx.fillStyle = 'rgba(100,140,255,' + glowA.toFixed(3) + ')';
+                        }
+                        ctx.fill();
+                    }
+                }
+
+                // Draw a glow on the download button when particles converge
+                if (convergeTarget && convergeEased > 0.4) {
+                    var glowSize = 60 + convergeEased * 40;
+                    var grad = ctx.createRadialGradient(convergeTarget.x, convergeTarget.y, 0, convergeTarget.x, convergeTarget.y, glowSize);
+                    var gA = (convergeEased - 0.4) * 0.25;
+                    grad.addColorStop(0, 'rgba(139,92,246,' + gA.toFixed(3) + ')');
+                    grad.addColorStop(0.5, 'rgba(100,140,255,' + (gA * 0.3).toFixed(3) + ')');
+                    grad.addColorStop(1, 'rgba(100,140,255,0)');
+                    ctx.beginPath();
+                    ctx.arc(convergeTarget.x, convergeTarget.y, glowSize, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+            }
+
+            animate();
         })();
     </script>
 </body>
