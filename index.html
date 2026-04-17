@@ -666,8 +666,9 @@
         .arena-arrow {
             position: absolute;
             bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0; right: 0;
+            display: flex;
+            justify-content: center;
             z-index: 1;
             cursor: pointer;
             opacity: 0;
@@ -676,17 +677,17 @@
         .main-site.revealed .arena-arrow {
             opacity: 1;
             transition-delay: 2.2s;
-            animation: arrowBounce 2s ease-in-out 3s infinite;
         }
         .arena-arrow svg {
             width: 48px; height: 48px;
             stroke: rgba(255,255,255,0.4);
             transition: stroke 0.3s ease;
+            animation: arrowBounceY 2s ease-in-out 3s infinite;
         }
         .arena-arrow:hover svg { stroke: rgba(255,255,255,0.8); }
-        @keyframes arrowBounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(12px); }
+        @keyframes arrowBounceY {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(12px); }
         }
 
         /* ===== SCREEN 2: RIVAL UNIVERSE ===== */
@@ -1216,204 +1217,88 @@
             min-height: 160px;
         }
 
-        /* Race visual — two phones */
-        .fv-race {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
-        .fv-phone {
-            width: 80px; height: 140px;
-            border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: rgba(0,10,30,0.5);
-            position: relative;
+        /* Phone mockup with video */
+        .fv-phone-mockup {
+            width: 220px;
+            height: 440px;
+            border-radius: 28px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: #000;
             overflow: hidden;
-        }
-        .fv-screen {
-            width: 100%; height: 100%;
             position: relative;
-        }
-        .fv-map-line {
-            position: absolute;
-            top: 50%; left: 10%;
-            width: 80%; height: 2px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 1px;
-            transform: rotate(-15deg);
-        }
-        .fv-runner {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            position: absolute;
-        }
-        .fv-runner.you {
-            background: #4af;
-            box-shadow: 0 0 12px #4af;
-            animation: fvRun 3s ease-in-out infinite;
-            top: 65%; left: 15%;
-        }
-        .fv-runner.rival {
-            background: #f55;
-            box-shadow: 0 0 12px #f55;
-            animation: fvRun 3s ease-in-out infinite 0.5s;
-            top: 35%; left: 25%;
-        }
-        .fv-live-badge {
-            position: absolute;
-            top: 8px; right: 8px;
-            font-size: 7px;
-            font-weight: 800;
-            color: #f44;
-            letter-spacing: 1.5px;
-            animation: blink 1s ease infinite;
-        }
-        .fv-vs {
-            font-size: 24px;
-            font-weight: 900;
-            color: rgba(255,255,255,0.6);
-            text-shadow: 0 0 20px rgba(100,150,255,0.4);
-            animation: pulse-vs 2s ease infinite;
-        }
-        @keyframes fvRun {
-            0%,100% { transform: translate(0,0); }
-            50% { transform: translate(40px,-20px); }
-        }
-        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
-        @keyframes pulse-vs { 0%,100%{transform:scale(1);opacity:0.6;} 50%{transform:scale(1.15);opacity:1;} }
-
-        /* Radar visual */
-        .fv-radar {
-            width: 180px; height: 180px;
-            position: relative;
-            border-radius: 50%;
-        }
-        .fv-radar-ring {
-            position: absolute; inset: 0;
-            border-radius: 50%;
-            border: 1px solid rgba(100,160,255,0.1);
-        }
-        .fv-radar-ring.r2 { inset: 25px; border-color: rgba(100,160,255,0.2); }
-        .fv-radar-ring.r3 { inset: 50px; border-color: rgba(100,160,255,0.3); }
-        .fv-radar-sweep {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 50%; height: 2px;
-            background: linear-gradient(90deg, rgba(100,160,255,0.6), transparent);
-            transform-origin: left center;
-            animation: radarSweep 3s linear infinite;
-        }
-        @keyframes radarSweep { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .fv-radar-center {
-            position: absolute;
-            width: 10px; height: 10px;
-            background: #4af;
-            border-radius: 50%;
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
-            box-shadow: 0 0 12px #4af;
-        }
-        .fv-radar-blip {
-            position: absolute;
-            width: 8px; height: 8px;
-            background: rgba(255,100,100,0.7);
-            border-radius: 50%;
-            animation: radarPop 2.5s ease infinite;
-        }
-        .fv-radar-blip.b1 { top: 18%; left: 62%; animation-delay: 0s; }
-        .fv-radar-blip.b2 { top: 68%; left: 22%; animation-delay: 0.8s; }
-        .fv-radar-blip.b3 { top: 38%; left: 78%; animation-delay: 1.6s; }
-        @keyframes radarPop {
-            0%,100% { opacity: 0; transform: scale(0.5); }
-            20%,80% { opacity: 1; transform: scale(1.2); }
-        }
-
-        /* Tier bar visual */
-        .fv-tiers {
-            display: flex;
-            gap: 6px;
-            align-items: flex-end;
-            justify-content: center;
-            height: 100px;
-        }
-        .fv-tier {
-            width: 48px;
-            height: var(--h);
-            border-radius: 6px 6px 0 0;
-            background: rgba(255,255,255,0.05);
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 6px;
-            font-family: var(--font);
-            font-size: 7px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.3);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .fv-tier-top {
-            background: rgba(120,80,255,0.15);
-            color: rgba(180,150,255,0.8);
-            box-shadow: 0 0 20px rgba(120,80,255,0.15);
-        }
-        .fv-tier-progress {
-            width: 100%;
-            max-width: 320px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(255,255,255,0.05);
-            margin: 16px auto 0;
-            overflow: hidden;
-        }
-        .fv-tier-fill {
-            height: 100%;
-            border-radius: 2px;
-            background: linear-gradient(90deg, rgba(100,160,255,0.6), rgba(160,100,255,0.6));
-            animation: tierFillAnim 3s ease-in-out infinite;
-        }
-        @keyframes tierFillAnim {
-            0% { width: 0; }
-            50% { width: 100%; }
-            100% { width: 0; }
-        }
-
-        /* Ghost track visual */
-        .fv-ghost-track {
-            width: 100%;
-            max-width: 400px;
-            height: 60px;
-            position: relative;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 80px rgba(100,140,255,0.05);
             margin: 0 auto;
         }
-        .fv-track-line {
+        .fv-phone-mockup::before {
+            content: '';
             position: absolute;
-            bottom: 20px; left: 0;
-            width: 100%; height: 1px;
-            background: rgba(255,255,255,0.06);
-        }
-        .fv-ghost-dot {
-            position: absolute;
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            bottom: 14px;
-        }
-        .fv-ghost-dot.real {
-            background: #4af;
-            box-shadow: 0 0 16px #4af, 0 0 32px rgba(68,170,255,0.3);
-            animation: ghostDotRun 3.5s ease-in-out infinite;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 80px; height: 20px;
+            background: #000;
+            border-radius: 0 0 14px 14px;
             z-index: 2;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-top: none;
         }
-        .fv-ghost-dot.ghost {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.25);
-            box-shadow: 0 0 10px rgba(255,255,255,0.05);
-            animation: ghostDotRun 3.5s ease-in-out infinite 0.6s;
-            z-index: 1;
+        .fv-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 26px;
         }
-        @keyframes ghostDotRun {
-            0% { left: 5%; }
-            100% { left: 88%; }
+
+        /* Ghost icon — large animated */
+        .ghost-icon-large {
+            width: 100px; height: 100px;
+            margin: 0 auto 32px;
+            animation: ghostFloat 3s ease-in-out infinite;
+        }
+        .ghost-icon-large svg {
+            width: 100%; height: 100%;
+            stroke: rgba(255,255,255,0.5);
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.1));
+        }
+        @keyframes ghostFloat {
+            0%,100% { transform: translateY(0) scale(1); opacity: 0.8; }
+            50% { transform: translateY(-12px) scale(1.05); opacity: 1; }
+        }
+
+        /* Final big download button */
+        .final-download {
+            margin-top: 48px;
+            text-align: center;
+        }
+        .final-download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 56px;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .final-download-btn:hover {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(100,140,255,0.15);
+        }
+        .final-download-sub {
+            font-family: var(--font);
+            font-size: 13px;
+            color: rgba(255,255,255,0.3);
+            margin-top: 14px;
+            letter-spacing: 0.5px;
         }
 
         /* Feature page nav arrow */
@@ -1436,21 +1321,21 @@
         }
         .feature-nav-arrow span {
             font-family: var(--font);
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 600;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.4);
             transition: color 0.3s ease;
         }
-        .feature-nav-arrow:hover span { color: rgba(255,255,255,0.6); }
+        .feature-nav-arrow:hover span { color: rgba(255,255,255,0.7); }
         .feature-nav-arrow svg {
-            width: 20px; height: 20px;
-            stroke: rgba(255,255,255,0.25);
+            width: 28px; height: 28px;
+            stroke: rgba(255,255,255,0.35);
             animation: arrowBounce 2s ease infinite;
             transition: stroke 0.3s ease;
         }
-        .feature-nav-arrow:hover svg { stroke: rgba(255,255,255,0.5); }
+        .feature-nav-arrow:hover svg { stroke: rgba(255,255,255,0.6); }
 
         /* Feature pages mobile */
         @media (max-width: 480px) {
@@ -1459,15 +1344,15 @@
             .feature-icon-wrap svg { width: 22px; height: 22px; }
             .feature-title { font-size: 18px; letter-spacing: 1.5px; }
             .feature-desc { font-size: 12px; margin-bottom: 30px; }
-            .fv-phone { width: 60px; height: 100px; border-radius: 10px; }
-            .fv-race { gap: 16px; }
-            .fv-vs { font-size: 18px; }
-            .fv-radar { width: 130px; height: 130px; }
-            .fv-radar-ring.r2 { inset: 18px; }
-            .fv-radar-ring.r3 { inset: 36px; }
-            .fv-tier { width: 36px; font-size: 6px; }
+            .fv-phone-mockup { width: 180px; height: 360px; border-radius: 24px; }
+            .fv-phone-mockup::before { width: 60px; height: 16px; border-radius: 0 0 10px 10px; }
+            .ghost-icon-large { width: 72px; height: 72px; margin-bottom: 24px; }
+            .final-download-btn { padding: 16px 40px; font-size: 15px; }
+            .final-download-sub { font-size: 11px; }
             .see-how-arrow { margin-top: 24px; }
-            .see-how-arrow span { font-size: 9px; letter-spacing: 2px; }
+            .see-how-arrow span { font-size: 10px; letter-spacing: 2px; }
+            .feature-nav-arrow span { font-size: 10px; letter-spacing: 3px; }
+            .feature-nav-arrow svg { width: 22px; height: 22px; }
             .rank-carousel-wrap { max-width: 300px; }
         }
     </style>
@@ -1641,10 +1526,10 @@
                 <h3 class="feature-title">Race Head-to-Head</h3>
                 <p class="feature-desc">Challenge rivals anywhere in the world to real-time GPS races. Track each other live on the map as you compete stride for stride.</p>
                 <div class="feature-visual">
-                    <div class="fv-race">
-                        <div class="fv-phone"><div class="fv-screen"><div class="fv-map-line"></div><div class="fv-runner you"></div><div class="fv-runner rival"></div></div><div class="fv-live-badge">LIVE</div></div>
-                        <div class="fv-vs">VS</div>
-                        <div class="fv-phone"><div class="fv-screen"><div class="fv-map-line"></div><div class="fv-runner you"></div><div class="fv-runner rival"></div></div><div class="fv-live-badge">LIVE</div></div>
+                    <div class="fv-phone-mockup">
+                        <video class="fv-video" autoplay muted loop playsinline>
+                            <source src="assets/feature-race.mp4" type="video/mp4">
+                        </video>
                     </div>
                 </div>
             </div>
@@ -1663,15 +1548,10 @@
                 <h3 class="feature-title">Meet Nearby Rivals</h3>
                 <p class="feature-desc">Discover competitors in your area. Find someone to race against, meetup, and settle the score in person.</p>
                 <div class="feature-visual">
-                    <div class="fv-radar">
-                        <div class="fv-radar-ring"></div>
-                        <div class="fv-radar-ring r2"></div>
-                        <div class="fv-radar-ring r3"></div>
-                        <div class="fv-radar-sweep"></div>
-                        <div class="fv-radar-blip b1"></div>
-                        <div class="fv-radar-blip b2"></div>
-                        <div class="fv-radar-blip b3"></div>
-                        <div class="fv-radar-center"></div>
+                    <div class="fv-phone-mockup">
+                        <video class="fv-video" autoplay muted loop playsinline>
+                            <source src="assets/feature-meetup.mp4" type="video/mp4">
+                        </video>
                     </div>
                 </div>
             </div>
@@ -1690,15 +1570,11 @@
                 <h3 class="feature-title">Climb the Ranks</h3>
                 <p class="feature-desc">Rise through 6 tiers from Underdog to Mythic. Every win earns points, unlocks exclusive cat avatars, and pushes you closer to the top.</p>
                 <div class="feature-visual">
-                    <div class="fv-tiers">
-                        <div class="fv-tier" style="--h:30px">Underdog</div>
-                        <div class="fv-tier" style="--h:42px">Contender</div>
-                        <div class="fv-tier" style="--h:54px">Breakout</div>
-                        <div class="fv-tier" style="--h:66px">Ace</div>
-                        <div class="fv-tier" style="--h:78px">Legend</div>
-                        <div class="fv-tier fv-tier-top" style="--h:90px">Mythic</div>
+                    <div class="fv-phone-mockup">
+                        <video class="fv-video" autoplay muted loop playsinline>
+                            <source src="assets/feature-ranks.mp4" type="video/mp4">
+                        </video>
                     </div>
-                    <div class="fv-tier-progress"><div class="fv-tier-fill"></div></div>
                 </div>
             </div>
             <div class="feature-nav-arrow" onclick="document.getElementById('feature-ghost').scrollIntoView({behavior:'smooth'})">
@@ -1707,29 +1583,22 @@
             </div>
         </div>
 
-        <!-- SCREEN 6: Feature page — Ghost Mode -->
+        <!-- SCREEN 6: Ghost Mode + Final Download -->
         <div class="feature-page" id="feature-ghost">
             <div class="feature-page-inner">
-                <div class="feature-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C7.58 2 4 5.58 4 10v8.5c0 1.38.56 2.5 1.25 2.5.42 0 .83-.37 1.12-.87L7.5 18.5l1.13 1.63c.29.5.7.87 1.12.87s.83-.37 1.12-.87L12 18.5l1.13 1.63c.29.5.7.87 1.12.87s.83-.37 1.12-.87L16.5 18.5l1.13 1.63c.29.5.7.87 1.12.87.69 0 1.25-1.12 1.25-2.5V10c0-4.42-3.58-8-8-8z"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/></svg>
+                <div class="ghost-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2C7.58 2 4 5.58 4 10v8.5c0 1.38.56 2.5 1.25 2.5.42 0 .83-.37 1.12-.87L7.5 18.5l1.13 1.63c.29.5.7.87 1.12.87s.83-.37 1.12-.87L12 18.5l1.13 1.63c.29.5.7.87 1.12.87s.83-.37 1.12-.87L16.5 18.5l1.13 1.63c.29.5.7.87 1.12.87.69 0 1.25-1.12 1.25-2.5V10c0-4.42-3.58-8-8-8z"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/></svg>
                 </div>
                 <h3 class="feature-title">Ghost Mode</h3>
                 <p class="feature-desc">Race against your past self. Your ghost runs your best route — can you beat it? Push your limits every single run.</p>
-                <div class="feature-visual">
-                    <div class="fv-ghost-track">
-                        <div class="fv-track-line"></div>
-                        <div class="fv-ghost-dot real"></div>
-                        <div class="fv-ghost-dot ghost"></div>
-                    </div>
-                </div>
 
-                <!-- Final download CTA -->
-                <div class="arena-cta" style="margin-top:60px; opacity:1; transform:none;">
-                    <a href="#" class="arena-download-btn">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                        Download for iOS
+                <!-- Big final download CTA -->
+                <div class="final-download">
+                    <a href="#" class="final-download-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                        Download on the App Store
                     </a>
-                    <div class="arena-sub">Free on the App Store</div>
+                    <div class="final-download-sub">Free — No ads, no subscriptions</div>
                 </div>
             </div>
         </div>
