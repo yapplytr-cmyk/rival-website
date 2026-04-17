@@ -1034,7 +1034,7 @@
 
             function stampBrush(cx, cy, size, angle, stretch) {
                 var rx = size;
-                var ry = size * (0.5 + (1 - stretch) * 0.5); // round when slow, elongated when fast
+                var ry = size * (0.28 + (1 - stretch) * 0.72); // much more elongated along stroke direction
                 maskCtx.save();
                 maskCtx.translate(cx, cy);
                 maskCtx.rotate(angle);
