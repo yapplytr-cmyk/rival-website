@@ -375,66 +375,66 @@
         /* Cursor glow and edge glow removed — clean reveal only */
         .cursor-glow, .reveal-edge-glow { display: none; }
 
-        /* RIVAL brand text — positioned at top above the girl's head */
-        .hero-brand-top {
-            position: absolute;
-            top: 48px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Center content overlay — everything centered on screen */
+        .hero-center-content {
+            position: relative;
             z-index: 50;
             text-align: center;
             pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .hero-brand-top .brand-text {
-            font-size: clamp(28px, 6vw, 56px);
-            font-weight: 800;
-            letter-spacing: 18px;
+        .hero-center-content .brand-text {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 10px;
             color: #fff;
             text-transform: uppercase;
+            margin-bottom: 16px;
             opacity: 0;
             animation: fadeInUp 1s ease-out 0.3s forwards;
-            text-shadow: 0 0 60px rgba(0,0,0,0.9), 0 0 120px rgba(0,0,0,0.5);
+            text-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
-        .hero-brand-top .intro-sub {
-            font-size: 13px;
-            color: rgba(255,255,255,0.5);
-            margin-top: 8px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
+        .hero-center-content h2 {
+            font-size: clamp(24px, 5vw, 42px);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            margin-bottom: 12px;
+            color: #fff;
             opacity: 0;
             animation: fadeInUp 1s ease-out 0.5s forwards;
+            text-shadow: 0 2px 40px rgba(0,0,0,0.9);
+        }
+        .hero-center-content .intro-sub {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 36px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.7s forwards;
             text-shadow: 0 2px 20px rgba(0,0,0,0.9);
         }
 
-        /* Bottom content — button area */
-        .hero-bottom-content {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            text-align: center;
-        }
-
         .enter-arena-btn {
-            padding: 18px 60px;
+            padding: 16px 52px;
             border-radius: 16px;
             background: var(--cta-gradient);
             color: #fff;
             font-family: var(--font);
             font-weight: 700;
-            font-size: 16px;
+            font-size: 15px;
             border: none;
             cursor: pointer;
             pointer-events: auto;
             transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-            box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
-            letter-spacing: 2px;
+            box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             position: relative;
             overflow: hidden;
             opacity: 0;
-            animation: fadeInUp 1s ease-out 0.7s forwards;
+            animation: fadeInUp 1s ease-out 0.9s forwards;
         }
         .enter-arena-btn::before {
             content: '';
@@ -450,7 +450,7 @@
             50% { box-shadow: 0 0 50px var(--accent-glow), 0 0 100px var(--accent-glow), 0 8px 40px rgba(0,0,0,0.4); }
         }
         .enter-arena-btn:hover {
-            transform: scale(1.15);
+            transform: translateY(-3px) scale(1.15);
             box-shadow: 0 0 50px var(--accent-glow), 0 0 100px var(--accent-glow), 0 8px 40px rgba(0,0,0,0.4);
             animation: btnPulseGlow 1.5s ease-in-out infinite, btnShimmer 2.5s ease-in-out infinite;
             cursor: pointer;
@@ -485,13 +485,13 @@
         @keyframes hintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
         /* Text fade out when button pressed */
-        .hero-brand-top.fading, .hero-bottom-content.fading, .touch-hint.fading {
+        .hero-center-content.fading, .touch-hint.fading {
             opacity: 0 !important;
             transition: opacity 0.5s ease;
             pointer-events: none !important;
         }
 
-        /* Transition video overlay */
+        /* Transition video overlay — hidden and non-interactive until playing */
         .hero-transition-video {
             position: absolute;
             top: 0; left: 0;
@@ -499,10 +499,12 @@
             z-index: 100;
             object-fit: cover;
             opacity: 0;
+            pointer-events: none;
             transition: opacity 0.6s ease;
         }
         .hero-transition-video.playing {
             opacity: 1;
+            pointer-events: auto;
         }
 
         /* Exit — just fade to gone after video ends */
@@ -531,9 +533,6 @@
             .cta-card { padding: 40px 24px; }
             .float-avatar { display: none; }
             .enter-arena-btn { padding: 14px 40px; font-size: 13px; }
-            .hero-bottom-content { bottom: 60px; }
-            .hero-brand-top { top: 32px; }
-            .hero-brand-top .brand-text { letter-spacing: 12px; }
             .touch-hint { bottom: 24px; }
             .cursor-glow { display: none; }
             .reveal-edge-glow { display: none; }
@@ -580,14 +579,11 @@
             <source src="assets/hero-transition.mp4" type="video/mp4">
         </video>
 
-        <!-- RIVAL text — above the girl's head -->
-        <div class="hero-brand-top" id="hero-brand-top">
+        <!-- Center content -->
+        <div class="hero-center-content" id="hero-center-content">
             <div class="brand-text">R I V A L</div>
-            <p class="intro-sub">Reveal your rival within</p>
-        </div>
-
-        <!-- Button — bottom of screen -->
-        <div class="hero-bottom-content" id="hero-bottom-content">
+            <h2>Reveal Your<br><span style="color:var(--accent)">Rival Within</span></h2>
+            <p class="intro-sub">Move your cursor to uncover the challenger</p>
             <button class="enter-arena-btn" id="enter-arena-btn">Enter the Arena</button>
         </div>
 
@@ -882,15 +878,16 @@
             var W, H, dpr;
             var isAnimating = true;
             var imgsReady = 0;
-            var blobRadius = 260;
+            // Responsive blob radius — smaller on mobile
+            var blobRadius = window.innerWidth <= 768 ? 120 : 260;
 
             topImg.onload = function() { imgsReady++; };
             baseImg.onload = function() { imgsReady++; };
 
-            // Trail of recent cursor positions — soft liquid smear
+            // Trail of recent cursor positions — liquid with gravity
             var trail = [];
-            var maxTrail = 30;
-            var trailLifetime = 120; // long slow fade
+            var maxTrail = 40;
+            var trailLifetime = 150; // long life so drips travel far
 
             // Smooth cursor
             var targetX = -999, targetY = -999;
@@ -919,6 +916,7 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                blobRadius = W <= 480 ? 90 : W <= 768 ? 120 : 260;
             }
             resize();
             window.addEventListener('resize', resize);
@@ -1015,28 +1013,31 @@
 
                 if (speed > 0.3) frame++;
 
-                // Drop trail points — spaced out, gentle
-                if (isActive && speed > 2) {
+                // Drop trail points — liquid drips that fall with gravity
+                if (isActive && speed > 1.5) {
                     trail.push({
                         x: smoothX, y: smoothY,
-                        vx: vx * 0.15, vy: vy * 0.15,
+                        vx: vx * 0.2, vy: vy * 0.2,
                         age: 0,
-                        radius: blobRadius * (0.7 + Math.random() * 0.3),
-                        gravity: 0.04 + Math.random() * 0.06
+                        radius: blobRadius * (0.5 + Math.random() * 0.5),
+                        gravity: 0.08 + Math.random() * 0.12, // initial gravity
+                        stretch: 1 // vertical stretch for drip shape
                     });
                     if (trail.length > maxTrail) trail.shift();
                 }
 
-                // Age trail — very gentle drift and gravity
+                // Age trail — gravity pulls drops downward like real liquid
                 for (var i = trail.length - 1; i >= 0; i--) {
                     var t = trail[i];
                     t.age++;
                     t.x += t.vx;
-                    t.y += t.vy + t.gravity;
-                    t.vx *= 0.98; // very gentle friction
-                    t.vy *= 0.98;
-                    t.gravity += 0.008; // slow gravity ramp
-                    if (t.age > trailLifetime) trail.splice(i, 1);
+                    t.vy += t.gravity; // gravity accelerates downward
+                    t.y += t.vy;
+                    t.vx *= 0.97; // horizontal friction — drips fall mostly straight
+                    t.gravity += 0.015; // gravity builds over time
+                    t.stretch = 1 + Math.min(Math.abs(t.vy) * 0.03, 0.6); // elongate as it falls
+                    t.radius *= 0.998; // slowly shrink like a drip thinning
+                    if (t.age > trailLifetime || t.y > H + 100) trail.splice(i, 1);
                 }
 
                 prevX = smoothX;
@@ -1069,40 +1070,30 @@
                 if (trail.length > 0 || isActive) {
                     octx.globalCompositeOperation = 'destination-out';
 
-                    // Trail blobs
+                    // Trail blobs — drip-shaped with gravity stretch
                     for (var i = 0; i < trail.length; i++) {
                         var t = trail[i];
                         var life = 1 - (t.age / trailLifetime);
                         var easedLife = life * life * life;
                         var alpha = easedLife;
                         var rad = t.radius * (0.3 + life * 0.7);
+                        var stretchY = t.stretch || 1; // vertical elongation from gravity
 
-                        var grad = octx.createRadialGradient(t.x, t.y, rad * 0.3, t.x, t.y, rad);
+                        var grad = octx.createRadialGradient(t.x, t.y, rad * 0.2, t.x, t.y, rad * stretchY);
                         grad.addColorStop(0, 'rgba(0,0,0,' + alpha.toFixed(3) + ')');
-                        grad.addColorStop(0.7, 'rgba(0,0,0,' + (alpha * 0.5).toFixed(3) + ')');
+                        grad.addColorStop(0.6, 'rgba(0,0,0,' + (alpha * 0.6).toFixed(3) + ')');
                         grad.addColorStop(1, 'rgba(0,0,0,0)');
                         octx.fillStyle = grad;
 
-                        // Draw blob on offscreen ctx
-                        var speed2 = Math.sqrt(t.vx * t.vx + t.vy * t.vy);
-                        var nx2 = speed2 > 0.5 ? t.vx / speed2 : 0;
-                        var ny2 = speed2 > 0.5 ? t.vy / speed2 : 0;
-                        var stretch2 = Math.min(speed2 * 0.6, rad * 0.35);
-                        var squish2 = Math.min(speed2 * 0.15, rad * 0.1);
+                        // Draw stretched ellipse for drip shape
+                        octx.save();
+                        octx.translate(t.x, t.y);
+                        octx.scale(1, stretchY); // stretch vertically for drip
                         octx.beginPath();
-                        for (var j = 0; j < blobPoints; j++) {
-                            var angle = (j / blobPoints) * Math.PI * 2;
-                            var cosA = Math.cos(angle), sinA = Math.sin(angle);
-                            var dot = cosA * nx2 + sinA * ny2;
-                            var cross = Math.abs(-sinA * nx2 + cosA * ny2);
-                            var br = rad + dot * stretch2 - cross * squish2;
-                            br = Math.max(rad * 0.7, br);
-                            var px = t.x + cosA * br, py = t.y + sinA * br;
-                            if (j === 0) octx.moveTo(px, py);
-                            else octx.lineTo(px, py);
-                        }
+                        octx.arc(0, 0, rad, 0, Math.PI * 2);
                         octx.closePath();
                         octx.fill();
+                        octx.restore();
                     }
 
                     // Main cursor blob
@@ -1152,14 +1143,12 @@
 
             // ENTER BUTTON — fade text, play transition video, then reveal site
             var transitionVideo = document.getElementById('hero-transition-video');
-            var heroBrandTop = document.getElementById('hero-brand-top');
-            var heroBottomContent = document.getElementById('hero-bottom-content');
+            var heroCenterContent = document.getElementById('hero-center-content');
             var touchHint = document.getElementById('touch-hint');
 
             enterBtn.addEventListener('click', function() {
                 // 1. Fade out all text/buttons immediately
-                heroBrandTop.classList.add('fading');
-                heroBottomContent.classList.add('fading');
+                heroCenterContent.classList.add('fading');
                 touchHint.classList.add('fading');
 
                 // 2. After text fades, show and play the transition video
