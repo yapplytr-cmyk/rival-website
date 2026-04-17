@@ -510,7 +510,7 @@
             z-index: 15;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .hero-transition-video.playing {
             opacity: 1;
@@ -1020,83 +1020,67 @@
                 isActive = true;
             });
 
-            // Movement-driven liquid noise
-            var noiseTime = 0;
-            var noiseSpeed = 0;
-            var noiseIntensity = 0;
+            // ========== SOFT BRUSH STROKE — radial gradient stamp ==========
+            // Pre-render brush tip as offscreen canvas for speed
+            var brushTip = document.createElement('canvas');
+            var brushTipCtx = brushTip.getContext('2d');
+            var brushSize = 0;
 
-            function noise1D(x) {
-                return Math.sin(x * 0.8) * 0.4
-                     + Math.sin(x * 1.9 + 1.3) * 0.3
-                     + Math.sin(x * 3.2 + 2.7) * 0.2
-                     + Math.sin(x * 5.1 + 0.5) * 0.1;
+            function buildBrushTip(size) {
+                brushSize = size;
+                var px = Math.ceil(size * 2 * dpr);
+                brushTip.width = px;
+                brushTip.height = px;
+                var c = px / 2;
+                var grad = brushTipCtx.createRadialGradient(c, c, 0, c, c, c);
+                grad.addColorStop(0, 'rgba(255,255,255,1)');
+                grad.addColorStop(0.55, 'rgba(255,255,255,1)');
+                grad.addColorStop(0.85, 'rgba(255,255,255,0.4)');
+                grad.addColorStop(1, 'rgba(255,255,255,0)');
+                brushTipCtx.fillStyle = grad;
+                brushTipCtx.fillRect(0, 0, px, px);
             }
 
-            // Smooth liquid waveform blob — dramatic organic shape, never circular
-            function stampBlob(cx, cy, radius) {
-                var points = 28;
-                // Strong baseline waveform (0.25) — blob always looks liquid
-                var distortion = 0.25 + noiseIntensity;
-                maskCtx.fillStyle = '#fff';
-                maskCtx.beginPath();
-                for (var i = 0; i <= points; i++) {
-                    var angle = (i / points) * Math.PI * 2;
-                    var n = noise1D(angle * 3 + noiseTime) * distortion;
-                    var r = radius * (1 + n);
-                    var px = cx + Math.cos(angle) * r;
-                    var py = cy + Math.sin(angle) * r;
-                    if (i === 0) maskCtx.moveTo(px, py);
-                    else maskCtx.lineTo(px, py);
-                }
-                maskCtx.closePath();
-                maskCtx.fill();
+            function stampBrush(cx, cy, size) {
+                if (size !== brushSize) buildBrushTip(size);
+                var drawSize = size * 2;
+                maskCtx.drawImage(brushTip, cx - drawSize, cy - drawSize, drawSize * 2, drawSize * 2);
             }
 
-            // Paint solid blobs along a path
-            function paintFluidSegment(x1, y1, x2, y2, force) {
+            // Paint brush along cursor path
+            function paintStroke(x1, y1, x2, y2, size) {
                 var dx = x2 - x1, dy = y2 - y1;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                var steps = Math.max(1, Math.ceil(dist / (blobRadius * 0.25)));
-
+                var spacing = size * 0.2;
+                var steps = Math.max(1, Math.ceil(dist / spacing));
                 for (var i = 0; i <= steps; i++) {
                     var t = i / steps;
-                    var x = x1 + dx * t;
-                    var y = y1 + dy * t;
-                    stampBlob(x, y, blobRadius * (1 + force * 0.4));
+                    stampBrush(x1 + dx * t, y1 + dy * t, size);
                 }
             }
+
+            // Dissolve state for smooth fade-out on Enter
+            var dissolveActive = false;
+            var dissolveFactor = 1; // 1 = full mask, fades to 0
 
             function animate() {
                 if (!isAnimating) return;
 
-                // Smooth cursor — lower factor = more fluid/trailing motion
+                // Smooth cursor
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.10;
-                smoothY += (targetY - smoothY) * 0.10;
+                smoothX += (targetX - smoothX) * 0.12;
+                smoothY += (targetY - smoothY) * 0.12;
 
-                // Movement speed drives the blob animation
-                var mx = smoothX - prevX, my = smoothY - prevY;
-                var cursorSpeed = Math.sqrt(mx * mx + my * my);
-
-                // Baseline: slow gentle breathing. Movement adds more speed + distortion
-                var targetNoiseSpeed = 0.008 + Math.min(cursorSpeed * 0.003, 0.035);
-                var targetNoiseIntensity = Math.min(cursorSpeed * 0.006, 0.17);
-
-                noiseSpeed += (targetNoiseSpeed - noiseSpeed) * 0.08;
-                noiseIntensity += (targetNoiseIntensity - noiseIntensity) * 0.06;
-
-                noiseTime += noiseSpeed;
-
-                // === DISSIPATION — multiply fade + flat subtract to kill lingering alpha ===
+                // === DISSIPATION — mask fades back so strokes aren't permanent ===
                 fadeCtx.save();
                 fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
                 fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
-                fadeCtx.globalAlpha = DISSIPATION;
+                fadeCtx.globalAlpha = dissolveActive ? dissolveFactor : DISSIPATION;
                 fadeCtx.drawImage(maskCanvas, 0, 0);
                 fadeCtx.globalAlpha = 1;
-                // Subtract a flat amount from alpha — kills low values to true zero
+                // Flat subtract to kill lingering near-zero alpha
                 fadeCtx.globalCompositeOperation = 'destination-out';
-                fadeCtx.fillStyle = 'rgba(0,0,0,0.035)';
+                fadeCtx.fillStyle = 'rgba(0,0,0,0.03)';
                 fadeCtx.fillRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalCompositeOperation = 'source-over';
                 fadeCtx.restore();
@@ -1107,27 +1091,34 @@
                 maskCtx.drawImage(fadeCanvas, 0, 0);
                 maskCtx.restore();
 
-                // === PAINT — solid wobbly blob at cursor ===
-                if (isActive && smoothX > -500 && prevX > -500) {
+                // === DISSOLVE — smoothly fade the entire mask to zero ===
+                if (dissolveActive) {
+                    dissolveFactor *= 0.93;
+                    if (dissolveFactor < 0.01) {
+                        dissolveFactor = 0;
+                        // Mask is fully gone — start video
+                        startVideoTransition();
+                        dissolveActive = false;
+                    }
+                }
+
+                // === PAINT — soft brush stroke at cursor ===
+                if (isActive && !dissolveActive && smoothX > -500 && prevX > -500) {
                     var dx = smoothX - prevX, dy = smoothY - prevY;
                     var speed = Math.sqrt(dx * dx + dy * dy);
+                    // Dynamic brush size: faster = bigger
+                    var dynSize = blobRadius * (1 + Math.min(speed / 30, 0.6));
 
-                    // Speed-based force: faster cursor = bigger blob
-                    var force = Math.min(speed / 25, 1.8);
-
-                    if (speed > 0.2) {
-                        paintFluidSegment(prevX, prevY, smoothX, smoothY, force);
+                    if (speed > 0.5) {
+                        paintStroke(prevX, prevY, smoothX, smoothY, dynSize);
                     }
-
-                    // Always stamp at current cursor position
-                    var cursorRadius = blobRadius * (1 + force * 0.4);
-                    stampBlob(smoothX, smoothY, cursorRadius);
+                    stampBrush(smoothX, smoothY, dynSize);
                 }
 
                 prevX = smoothX;
                 prevY = smoothY;
 
-                // === RENDER — no blur, no feathering, direct mask ===
+                // === RENDER ===
                 ctx.clearRect(0, 0, W, H);
                 if (imgsReady < 2) { requestAnimationFrame(animate); return; }
 
@@ -1141,125 +1132,23 @@
                 offCtx.globalCompositeOperation = 'source-over';
                 offCtx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                // Punch mask — both are at DPR, use identity transform for raw pixel copy
                 offCtx.save();
                 offCtx.setTransform(1, 0, 0, 1, 0, 0);
                 offCtx.globalCompositeOperation = 'destination-out';
                 offCtx.drawImage(maskCanvas, 0, 0);
                 offCtx.restore();
 
-                // Composite onto main canvas
                 offCtx.globalCompositeOperation = 'source-over';
                 ctx.drawImage(offCanvas, 0, 0, W * dpr, H * dpr, 0, 0, W, H);
 
-                // === SHATTER PARTICLES — draw falling blob chunks ===
-                if (shatterParticles.length > 0) {
-                    drawShatterParticles();
-                }
-
                 requestAnimationFrame(animate);
             }
+
+            // Build initial brush tip and start
+            buildBrushTip(blobRadius);
             animate();
 
-            // ========== SHATTER EFFECT — blob breaks apart and falls ==========
-            var shatterParticles = [];
-            var shatterActive = false;
-
-            function createShatterParticles() {
-                shatterParticles = [];
-                // Sample the current mask to find where the blob is
-                var sampleCtx = maskCtx;
-                var pw = W * dpr, ph = H * dpr;
-                var imageData = sampleCtx.getImageData(0, 0, pw, ph);
-                var data = imageData.data;
-
-                // Grid scan — find lit pixels and create chunks
-                var chunkSize = Math.round(18 * dpr);
-                for (var gy = 0; gy < ph; gy += chunkSize) {
-                    for (var gx = 0; gx < pw; gx += chunkSize) {
-                        // Sample center of chunk
-                        var sx = Math.min(gx + Math.floor(chunkSize / 2), pw - 1);
-                        var sy = Math.min(gy + Math.floor(chunkSize / 2), ph - 1);
-                        var idx = (sy * pw + sx) * 4;
-                        if (data[idx + 3] > 30) {
-                            // This chunk has mask data — create a falling particle
-                            shatterParticles.push({
-                                x: gx / dpr,
-                                y: gy / dpr,
-                                w: chunkSize / dpr,
-                                h: chunkSize / dpr,
-                                vx: (Math.random() - 0.5) * 3,
-                                vy: Math.random() * 2 + 1,
-                                gravity: 0.15 + Math.random() * 0.1,
-                                rotation: 0,
-                                rotSpeed: (Math.random() - 0.5) * 0.15,
-                                alpha: 1,
-                                fadeSpeed: 0.008 + Math.random() * 0.006,
-                                // Store the chunk's image data from the BASE image (rival girl)
-                                srcX: gx,
-                                srcY: gy,
-                                srcW: chunkSize,
-                                srcH: chunkSize
-                            });
-                        }
-                    }
-                }
-                shatterActive = true;
-            }
-
-            // Snapshot canvas for shatter chunks
-            var shatterSnapshot = document.createElement('canvas');
-            var shatterSnapCtx = shatterSnapshot.getContext('2d');
-
-            function takeShatterSnapshot() {
-                // Capture the current revealed area (base image masked by blob)
-                shatterSnapshot.width = W * dpr;
-                shatterSnapshot.height = H * dpr;
-                shatterSnapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                var r = getCoverRect(baseImg);
-                // Draw base image
-                shatterSnapCtx.drawImage(baseImg, r.x, r.y, r.w, r.h);
-                // Mask it to only the blob area
-                shatterSnapCtx.save();
-                shatterSnapCtx.setTransform(1, 0, 0, 1, 0, 0);
-                shatterSnapCtx.globalCompositeOperation = 'destination-in';
-                shatterSnapCtx.drawImage(maskCanvas, 0, 0);
-                shatterSnapCtx.restore();
-                shatterSnapCtx.globalCompositeOperation = 'source-over';
-            }
-
-            function drawShatterParticles() {
-                var alive = false;
-                for (var i = 0; i < shatterParticles.length; i++) {
-                    var p = shatterParticles[i];
-                    if (p.alpha <= 0) continue;
-                    alive = true;
-
-                    // Physics
-                    p.vy += p.gravity;
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.rotation += p.rotSpeed;
-                    p.alpha -= p.fadeSpeed;
-                    if (p.alpha < 0) p.alpha = 0;
-
-                    // Draw chunk from snapshot
-                    ctx.save();
-                    ctx.globalAlpha = p.alpha;
-                    ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                    ctx.rotate(p.rotation);
-                    ctx.drawImage(shatterSnapshot,
-                        p.srcX, p.srcY, p.srcW, p.srcH,
-                        -p.w / 2, -p.h / 2, p.w, p.h);
-                    ctx.restore();
-                }
-                if (!alive) {
-                    shatterParticles = [];
-                    shatterActive = false;
-                }
-            }
-
-            // ENTER BUTTON — plays 4K transition video then reveals arena
+            // ========== ENTER BUTTON — smooth dissolve then seamless video ==========
             var heroBrandText = document.getElementById('hero-brand-text');
             var heroBtnWrap = document.getElementById('hero-btn-wrap');
             var touchHint = document.getElementById('touch-hint');
@@ -1267,18 +1156,30 @@
 
             var transitionStarted = false;
 
+            function startVideoTransition() {
+                transVideo.currentTime = 0;
+                transVideo.classList.add('playing');
+                transVideo.play().catch(function() {
+                    revealArena();
+                });
+                transVideo.addEventListener('ended', function onEnd() {
+                    transVideo.removeEventListener('ended', onEnd);
+                    revealArena();
+                });
+                setTimeout(function() {
+                    if (!hero.classList.contains('gone')) revealArena();
+                }, 10000);
+            }
+
             function revealArena() {
                 if (hero.classList.contains('gone')) return;
-                // Stop canvas animation now — video fully covers it
                 isAnimating = false;
                 hero.classList.add('fading-out');
-                // Start revealing main site slightly before hero fully gone (overlap)
                 setTimeout(function() {
                     mainSite.classList.add('revealed');
                     document.body.style.overflow = '';
                     window.scrollTo(0, 0);
                 }, 400);
-                // Remove hero after fade completes
                 setTimeout(function() {
                     hero.classList.add('gone');
                 }, 1300);
@@ -1288,49 +1189,17 @@
                 if (transitionStarted) return;
                 transitionStarted = true;
 
-                // 1. Staggered fade — button first, then text, then hint
+                // 1. Fade out UI elements
                 heroBtnWrap.classList.add('fading');
                 setTimeout(function() { heroBrandText.classList.add('fading'); }, 100);
                 setTimeout(function() { touchHint.classList.add('fading'); }, 50);
 
-                // 2. Shatter the blob — snapshot it, clear mask, create falling particles
+                // 2. Stop new brush strokes, start smooth dissolve of existing strokes
                 setTimeout(function() {
-                    takeShatterSnapshot();
-                    createShatterParticles();
-                    // Clear the mask so the reveal disappears (top image returns to full)
-                    maskCtx.save();
-                    maskCtx.setTransform(1, 0, 0, 1, 0, 0);
-                    maskCtx.clearRect(0, 0, W * dpr, H * dpr);
-                    maskCtx.restore();
-                    // Also clear dissipation buffer
-                    fadeCtx.save();
-                    fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
-                    fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
-                    fadeCtx.restore();
-                    // Stop cursor from painting new blobs
                     isActive = false;
-                }, 300);
-
-                // 3. After shatter plays out, crossfade to video
-                setTimeout(function() {
-                    transVideo.currentTime = 0;
-                    transVideo.classList.add('playing');
-                    transVideo.play().catch(function() {
-                        revealArena();
-                    });
-
-                    transVideo.addEventListener('ended', function onEnd() {
-                        transVideo.removeEventListener('ended', onEnd);
-                        revealArena();
-                    });
-
-                    // Safety timeout
-                    setTimeout(function() {
-                        if (!hero.classList.contains('gone')) {
-                            revealArena();
-                        }
-                    }, 10000);
-                }, 1800);
+                    dissolveActive = true;
+                    dissolveFactor = 1;
+                }, 200);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
