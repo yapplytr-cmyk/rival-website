@@ -29,8 +29,8 @@
 
         /* DARK THEME (default) */
         [data-theme="dark"] {
-            --bg-primary: #08080d;
-            --bg-secondary: #0f0f16;
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
             --bg-card: rgba(255,255,255,0.04);
             --glass-bg: rgba(255,255,255,0.06);
             --glass-border: rgba(255,255,255,0.1);
@@ -41,20 +41,20 @@
             --accent: #8B5CF6;
             --accent-glow: rgba(139,92,246,0.35);
             --accent-secondary: #a78bfa;
-            --gradient-hero: linear-gradient(135deg, #08080d 0%, #1a1025 50%, #08080d 100%);
+            --gradient-hero: #000000;
             --orb-1: rgba(139,92,246,0.18);
             --orb-2: rgba(99,102,241,0.12);
             --orb-3: rgba(168,85,247,0.1);
             --cta-gradient: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa);
             --feature-icon-bg: rgba(139,92,246,0.12);
-            --navbar-bg: rgba(8,8,13,0.7);
-            --navbar-bg-scroll: rgba(8,8,13,0.92);
+            --navbar-bg: rgba(0,0,0,0.7);
+            --navbar-bg-scroll: rgba(0,0,0,0.92);
         }
 
         /* ORANGE THEME — fully orange like the app */
         [data-theme="orange"] {
-            --bg-primary: #1a0e00;
-            --bg-secondary: #241400;
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
             --bg-card: rgba(255,140,0,0.1);
             --glass-bg: rgba(255,160,40,0.14);
             --glass-border: rgba(255,180,60,0.25);
@@ -65,20 +65,20 @@
             --accent: #FF9500;
             --accent-glow: rgba(255,149,0,0.5);
             --accent-secondary: #FFB340;
-            --gradient-hero: linear-gradient(135deg, #1a0e00 0%, #3d2000 30%, #2a1500 60%, #1a0e00 100%);
+            --gradient-hero: #000000;
             --orb-1: rgba(255,149,0,0.35);
             --orb-2: rgba(255,200,0,0.25);
             --orb-3: rgba(255,100,0,0.2);
             --cta-gradient: linear-gradient(135deg, #E67E00, #FF9500, #FFB340);
             --feature-icon-bg: rgba(255,149,0,0.2);
-            --navbar-bg: rgba(26,14,0,0.8);
-            --navbar-bg-scroll: rgba(26,14,0,0.95);
+            --navbar-bg: rgba(0,0,0,0.7);
+            --navbar-bg-scroll: rgba(0,0,0,0.92);
         }
 
         /* PURPLE THEME */
         [data-theme="purple"] {
-            --bg-primary: #06040f;
-            --bg-secondary: #0d0918;
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
             --bg-card: rgba(160,80,255,0.06);
             --glass-bg: rgba(150,70,255,0.1);
             --glass-border: rgba(180,120,255,0.18);
@@ -89,14 +89,14 @@
             --accent: #BF5AF2;
             --accent-glow: rgba(191,90,242,0.4);
             --accent-secondary: #D98FFF;
-            --gradient-hero: linear-gradient(135deg, #06040f 0%, #1e0c38 50%, #06040f 100%);
+            --gradient-hero: #000000;
             --orb-1: rgba(191,90,242,0.25);
             --orb-2: rgba(218,143,255,0.18);
             --orb-3: rgba(150,40,230,0.12);
             --cta-gradient: linear-gradient(135deg, #9B30FF, #BF5AF2, #D98FFF);
             --feature-icon-bg: rgba(191,90,242,0.15);
-            --navbar-bg: rgba(6,4,15,0.7);
-            --navbar-bg-scroll: rgba(6,4,15,0.92);
+            --navbar-bg: rgba(0,0,0,0.7);
+            --navbar-bg-scroll: rgba(0,0,0,0.92);
         }
 
         /* RESET */
@@ -375,10 +375,10 @@
         /* Cursor glow and edge glow removed — clean reveal only */
         .cursor-glow, .reveal-edge-glow { display: none; }
 
-        /* RIVAL brand — positioned above the girl's head */
+        /* RIVAL brand — ABOVE the girl's head, centered */
         .hero-brand-text {
             position: absolute;
-            top: 12%;
+            top: 4%;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
@@ -391,9 +391,10 @@
             opacity: 0;
             animation: fadeInUp 1s ease-out 0.3s forwards;
             text-shadow: 0 0 30px rgba(0,0,0,0.8);
+            white-space: nowrap;
         }
 
-        /* Enter Arena button — dead center of screen */
+        /* Enter Arena button — center of screen */
         .hero-btn-wrap {
             position: absolute;
             top: 50%;
@@ -404,19 +405,19 @@
         }
 
         .enter-arena-btn {
-            padding: 16px 52px;
-            border-radius: 16px;
+            padding: 18px 56px;
+            border-radius: 50px;
             background: var(--cta-gradient);
             color: #fff;
             font-family: var(--font);
             font-weight: 700;
-            font-size: 15px;
-            border: none;
+            font-size: 16px;
+            border: 2px solid rgba(255,255,255,0.25);
             cursor: pointer;
             pointer-events: auto;
-            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease;
-            box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
-            letter-spacing: 1.5px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
             text-transform: uppercase;
             position: relative;
             overflow: hidden;
@@ -428,17 +429,17 @@
             position: absolute;
             top: 0; left: -100%;
             width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
             animation: btnShimmer 2.5s ease-in-out infinite;
         }
         @keyframes btnShimmer { 0% { left: -100%; } 100% { left: 100%; } }
         .enter-arena-btn:hover {
-            transform: scale(1.15);
-            box-shadow: 0 0 50px var(--accent-glow), 0 0 100px var(--accent-glow), 0 8px 40px rgba(0,0,0,0.4);
-            cursor: pointer;
+            transform: scale(1.12) translateY(-2px);
+            box-shadow: 0 0 60px var(--accent-glow), 0 0 120px var(--accent-glow), 0 12px 40px rgba(0,0,0,0.4);
+            border-color: rgba(255,255,255,0.5);
         }
         .enter-arena-btn:active {
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
 
         /* Touch hint at bottom */
@@ -489,19 +490,38 @@
             pointer-events: auto;
         }
 
-        /* Exit — just fade to gone after video ends */
-        .interactive-hero.exiting {
-            pointer-events: none;
-        }
+        /* Hero gone — instant hide (video already black, site already black) */
         .interactive-hero.gone { display: none; }
 
-        /* Main site hidden initially */
+        /* Main site hidden initially — fades in from pure black */
         .main-site {
             opacity: 0;
-            transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s;
-            transform: translateY(30px);
+            transition: opacity 1.2s ease;
         }
-        .main-site.revealed { opacity: 1; transform: translateY(0); }
+        .main-site.revealed { opacity: 1; }
+
+        /* Elements animate up from darkness once site is revealed */
+        .main-site .hero-content,
+        .main-site .navbar,
+        .main-site .phone-showcase,
+        .main-site .features-grid,
+        .main-site .stats-row {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .main-site.revealed .navbar {
+            opacity: 1; transform: translateY(0);
+            transition-delay: 0.3s;
+        }
+        .main-site.revealed .hero-content {
+            opacity: 1; transform: translateY(0);
+            transition-delay: 0.5s;
+        }
+        .main-site.revealed .phone-showcase {
+            opacity: 1; transform: translateY(0);
+            transition-delay: 0.8s;
+        }
 
         /* RESPONSIVE */
         @media (max-width: 768px) {
@@ -514,8 +534,9 @@
             .stats-row { gap: 32px; padding: 28px 20px; }
             .cta-card { padding: 40px 24px; }
             .float-avatar { display: none; }
+            .hero-brand-text { top: 3%; font-size: 14px; letter-spacing: 8px; }
             .enter-arena-btn { padding: 14px 40px; font-size: 13px; }
-            .touch-hint { bottom: 24px; }
+            .touch-hint { bottom: 24px; font-size: 10px; }
             .cursor-glow { display: none; }
             .reveal-edge-glow { display: none; }
             .phone-frame { width: 240px; height: 480px; }
@@ -1048,67 +1069,88 @@
                 octx.globalCompositeOperation = 'source-over';
                 octx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                // Punch liquid holes in the offscreen canvas
+                // Punch smooth liquid holes — soft overlapping circles
                 if (trail.length > 0 || isActive) {
                     octx.globalCompositeOperation = 'destination-out';
 
-                    // Smooth continuous brush stroke — connect all trail points
-                    // Draw from oldest to newest with increasing width + opacity
-                    octx.lineCap = 'round';
-                    octx.lineJoin = 'round';
+                    // Trail — soft fading circles that fall with gravity
+                    for (var i = 0; i < trail.length; i++) {
+                        var t = trail[i];
+                        var life = 1 - (t.age / trailLifetime);
+                        var alpha = life * life; // smooth quadratic fade
+                        var rad = t.radius * (0.4 + life * 0.6);
 
-                    if (trail.length > 1) {
-                        for (var i = 1; i < trail.length; i++) {
-                            var t0 = trail[i - 1];
-                            var t1 = trail[i];
+                        // Soft radial gradient — perfectly smooth edge, no hard lines
+                        var g = octx.createRadialGradient(t.x, t.y, 0, t.x, t.y, rad);
+                        g.addColorStop(0, 'rgba(0,0,0,' + alpha.toFixed(3) + ')');
+                        g.addColorStop(0.65, 'rgba(0,0,0,' + (alpha * 0.7).toFixed(3) + ')');
+                        g.addColorStop(1, 'rgba(0,0,0,0)');
+                        octx.fillStyle = g;
+                        octx.beginPath();
+                        octx.arc(t.x, t.y, rad, 0, Math.PI * 2);
+                        octx.fill();
+                    }
+
+                    // Fill gaps between trail points with interpolated circles
+                    for (var i = 1; i < trail.length; i++) {
+                        var t0 = trail[i - 1], t1 = trail[i];
+                        var dx = t1.x - t0.x, dy = t1.y - t0.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        var steps = Math.ceil(dist / (blobRadius * 0.3));
+                        if (steps < 2) continue;
+                        for (var s = 1; s < steps; s++) {
+                            var frac = s / steps;
+                            var ix = t0.x + dx * frac;
+                            var iy = t0.y + dy * frac;
                             var life0 = 1 - (t0.age / trailLifetime);
                             var life1 = 1 - (t1.age / trailLifetime);
-                            var alpha = Math.max(life0, life1);
-                            alpha = alpha * alpha; // ease
-                            var rad = (t0.radius + t1.radius) * 0.5;
-                            var avgLife = (life0 + life1) * 0.5;
-                            var lineW = rad * 2 * (0.3 + avgLife * 0.7);
+                            var ilife = life0 + (life1 - life0) * frac;
+                            var ialpha = ilife * ilife;
+                            var irad = (t0.radius + (t1.radius - t0.radius) * frac) * (0.4 + ilife * 0.6);
 
-                            octx.strokeStyle = 'rgba(0,0,0,' + alpha.toFixed(3) + ')';
-                            octx.lineWidth = lineW;
+                            var ig = octx.createRadialGradient(ix, iy, 0, ix, iy, irad);
+                            ig.addColorStop(0, 'rgba(0,0,0,' + ialpha.toFixed(3) + ')');
+                            ig.addColorStop(0.65, 'rgba(0,0,0,' + (ialpha * 0.7).toFixed(3) + ')');
+                            ig.addColorStop(1, 'rgba(0,0,0,0)');
+                            octx.fillStyle = ig;
                             octx.beginPath();
-                            octx.moveTo(t0.x, t0.y);
-                            // Smooth curve through midpoint
-                            var mx = (t0.x + t1.x) * 0.5;
-                            var my = (t0.y + t1.y) * 0.5;
-                            octx.quadraticCurveTo(t0.x, t0.y, mx, my);
-                            octx.stroke();
-                        }
-                        // Connect last trail point to cursor for seamless stroke
-                        if (isActive && smoothX > -500 && trail.length > 0) {
-                            var last = trail[trail.length - 1];
-                            var lastLife = 1 - (last.age / trailLifetime);
-                            octx.strokeStyle = 'rgba(0,0,0,1)';
-                            octx.lineWidth = blobRadius * 2 * (0.5 + lastLife * 0.5);
-                            octx.beginPath();
-                            octx.moveTo(last.x, last.y);
-                            octx.lineTo(smoothX, smoothY);
-                            octx.stroke();
+                            octx.arc(ix, iy, irad, 0, Math.PI * 2);
+                            octx.fill();
                         }
                     }
 
-                    // Main cursor circle — smooth round blob at cursor
-                    if (isActive && smoothX > -500) {
-                        octx.fillStyle = 'rgba(0,0,0,1)';
-                        octx.beginPath();
-                        octx.arc(smoothX, smoothY, blobRadius, 0, Math.PI * 2);
-                        octx.fill();
+                    // Connect trail to cursor smoothly
+                    if (isActive && smoothX > -500 && trail.length > 0) {
+                        var last = trail[trail.length - 1];
+                        var dx = smoothX - last.x, dy = smoothY - last.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        var steps = Math.ceil(dist / (blobRadius * 0.25));
+                        for (var s = 0; s <= steps; s++) {
+                            var frac = s / Math.max(steps, 1);
+                            var ix = last.x + dx * frac;
+                            var iy = last.y + dy * frac;
+                            var irad = blobRadius * (0.7 + frac * 0.3);
+                            var ig = octx.createRadialGradient(ix, iy, 0, ix, iy, irad);
+                            ig.addColorStop(0, 'rgba(0,0,0,1)');
+                            ig.addColorStop(0.7, 'rgba(0,0,0,0.8)');
+                            ig.addColorStop(1, 'rgba(0,0,0,0)');
+                            octx.fillStyle = ig;
+                            octx.beginPath();
+                            octx.arc(ix, iy, irad, 0, Math.PI * 2);
+                            octx.fill();
+                        }
+                    }
 
-                        // Soft feathered edge
-                        var feather = octx.createRadialGradient(
-                            smoothX, smoothY, blobRadius * 0.85,
-                            smoothX, smoothY, blobRadius * 1.2
-                        );
-                        feather.addColorStop(0, 'rgba(0,0,0,0.5)');
-                        feather.addColorStop(1, 'rgba(0,0,0,0)');
-                        octx.fillStyle = feather;
+                    // Main cursor blob — clean soft circle
+                    if (isActive && smoothX > -500) {
+                        var mg = octx.createRadialGradient(smoothX, smoothY, 0, smoothX, smoothY, blobRadius * 1.1);
+                        mg.addColorStop(0, 'rgba(0,0,0,1)');
+                        mg.addColorStop(0.8, 'rgba(0,0,0,1)');
+                        mg.addColorStop(0.95, 'rgba(0,0,0,0.3)');
+                        mg.addColorStop(1, 'rgba(0,0,0,0)');
+                        octx.fillStyle = mg;
                         octx.beginPath();
-                        octx.arc(smoothX, smoothY, blobRadius * 1.2, 0, Math.PI * 2);
+                        octx.arc(smoothX, smoothY, blobRadius * 1.1, 0, Math.PI * 2);
                         octx.fill();
                     }
                 }
@@ -1127,46 +1169,45 @@
             var touchHint = document.getElementById('touch-hint');
 
             enterBtn.addEventListener('click', function() {
-                // 1. Fade out all text/buttons immediately
+                // 1. Fade out all text/buttons
                 heroBrandText.classList.add('fading');
                 heroBtnWrap.classList.add('fading');
                 touchHint.classList.add('fading');
 
-                // 2. After text fades, show and play the transition video
+                // 2. After text fades, crossfade canvas into video
                 setTimeout(function() {
-                    isAnimating = false; // stop canvas rendering
                     transitionVideo.classList.add('playing');
                     transitionVideo.currentTime = 0;
                     transitionVideo.play().catch(function() {});
 
-                    // 3. When video ends (screen is black), smoothly transition to main site
-                    transitionVideo.addEventListener('ended', function() {
-                        // Brief pause on black frame before revealing site
-                        setTimeout(function() {
-                            hero.classList.add('exiting');
-                            hero.style.opacity = '0';
-                            hero.style.transition = 'opacity 0.6s ease';
+                    // Stop canvas once video is fully visible
+                    setTimeout(function() { isAnimating = false; }, 600);
+
+                    // 3. Near end of video (last ~1s is pure black) — start revealing site
+                    transitionVideo.addEventListener('timeupdate', function onTime() {
+                        if (transitionVideo.currentTime >= transitionVideo.duration - 0.8) {
+                            transitionVideo.removeEventListener('timeupdate', onTime);
+                            // Site is black, hero is black — seamless handoff
                             mainSite.classList.add('revealed');
                             document.body.style.overflow = '';
                             window.scrollTo(0, 0);
+                        }
+                    });
 
-                            setTimeout(function() {
-                                hero.classList.add('gone');
-                            }, 700);
-                        }, 300);
+                    // When video fully ends, remove hero from DOM
+                    transitionVideo.addEventListener('ended', function() {
+                        hero.classList.add('gone');
                     }, { once: true });
 
-                    // Fallback: if video fails or stalls, transition after 9s
+                    // Fallback
                     setTimeout(function() {
                         if (!hero.classList.contains('gone')) {
-                            hero.style.opacity = '0';
-                            hero.style.transition = 'opacity 0.6s ease';
                             mainSite.classList.add('revealed');
                             document.body.style.overflow = '';
-                            setTimeout(function() { hero.classList.add('gone'); }, 700);
+                            hero.classList.add('gone');
                         }
-                    }, 9500);
-                }, 500);
+                    }, 10000);
+                }, 400);
             });
 
             enterBtn.addEventListener('mouseenter', function() { hero.style.cursor = 'pointer'; });
