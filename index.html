@@ -888,37 +888,29 @@
             topImg.onload = function() { imgsReady++; };
             baseImg.onload = function() { imgsReady++; };
 
-            // Trail of recent cursor positions — liquid with gravity
+            // Trail of cursor positions — smooth liquid stroke
             var trail = [];
-            var maxTrail = 80;
-            var trailLifetime = 180;
+            var maxTrail = 120;
+            var trailLifetime = 250;
 
             // Smooth cursor
             var targetX = -999, targetY = -999;
             var smoothX = -999, smoothY = -999;
             var prevX = -999, prevY = -999;
             var isActive = false;
+            var frame = 0;
 
-            // Pre-rendered soft circle sprite — draw once, stamp everywhere (fast!)
-            var blobSprite = null;
-            var spriteRadius = 0;
-            function buildSprite() {
-                spriteRadius = blobRadius * 1.3;
-                var size = Math.ceil(spriteRadius * 2);
-                blobSprite = document.createElement('canvas');
-                blobSprite.width = size;
-                blobSprite.height = size;
-                var sc = blobSprite.getContext('2d');
-                var g = sc.createRadialGradient(spriteRadius, spriteRadius, 0, spriteRadius, spriteRadius, spriteRadius);
-                g.addColorStop(0, 'rgba(0,0,0,1)');
-                g.addColorStop(0.55, 'rgba(0,0,0,0.9)');
-                g.addColorStop(0.75, 'rgba(0,0,0,0.45)');
-                g.addColorStop(0.9, 'rgba(0,0,0,0.1)');
-                g.addColorStop(1, 'rgba(0,0,0,0)');
-                sc.fillStyle = g;
-                sc.fillRect(0, 0, size, size);
+            // Organic blob — 14 control points with wobble for living liquid shape
+            var blobN = 14;
+            var blobOffsets = [];
+            for (var i = 0; i < blobN; i++) {
+                blobOffsets.push({
+                    base: (Math.random() - 0.5) * 0.22,
+                    phase: Math.random() * Math.PI * 2,
+                    speed: 0.015 + Math.random() * 0.025,
+                    amp: 0.04 + Math.random() * 0.06
+                });
             }
-            buildSprite();
 
             function resize() {
                 dpr = window.devicePixelRatio || 1;
@@ -930,7 +922,6 @@
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 blobRadius = W <= 480 ? 90 : W <= 768 ? 120 : 260;
-                buildSprite();
             }
             resize();
             window.addEventListener('resize', resize);
@@ -969,49 +960,85 @@
                 isActive = true;
             });
 
-            // Stamp a pre-rendered soft circle onto a context (much faster than gradient-per-frame)
-            function stampBlob(targetCtx, x, y, rad, alpha) {
-                if (alpha < 0.01 || rad < 1) return;
-                var size = spriteRadius * 2;
-                var scale = (rad * 2) / size;
-                targetCtx.globalAlpha = alpha;
-                targetCtx.drawImage(blobSprite, x - rad, y - rad, rad * 2, rad * 2);
-                targetCtx.globalAlpha = 1;
+            // Draw organic wobbly blob shape — Catmull-Rom spline with living wobble
+            function drawOrganicBlob(targetCtx, cx, cy, radius, vx, vy) {
+                var speed = Math.sqrt(vx * vx + vy * vy);
+                var nx = speed > 0.5 ? vx / speed : 0;
+                var ny = speed > 0.5 ? vy / speed : 0;
+                var stretch = Math.min(speed * 0.5, radius * 0.3);
+                var squish = Math.min(speed * 0.12, radius * 0.08);
+
+                var pts = [];
+                for (var i = 0; i < blobN; i++) {
+                    var angle = (i / blobN) * Math.PI * 2;
+                    var cosA = Math.cos(angle), sinA = Math.sin(angle);
+                    var o = blobOffsets[i];
+                    var wobble = o.base + Math.sin(frame * o.speed + o.phase) * o.amp;
+                    var dot = cosA * nx + sinA * ny;
+                    var cross = Math.abs(-sinA * nx + cosA * ny);
+                    var r = radius * (1 + wobble) + dot * stretch - cross * squish;
+                    r = Math.max(radius * 0.65, r);
+                    pts.push({ x: cx + cosA * r, y: cy + sinA * r });
+                }
+
+                // Smooth Catmull-Rom spline through points
+                targetCtx.beginPath();
+                for (var i = 0; i < pts.length; i++) {
+                    var p0 = pts[(i - 1 + pts.length) % pts.length];
+                    var p1 = pts[i];
+                    var p2 = pts[(i + 1) % pts.length];
+                    var p3 = pts[(i + 2) % pts.length];
+                    if (i === 0) targetCtx.moveTo(p1.x, p1.y);
+                    targetCtx.bezierCurveTo(
+                        p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6,
+                        p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6,
+                        p2.x, p2.y
+                    );
+                }
+                targetCtx.closePath();
+            }
+
+            // Draw smooth bezier path through an array of {x,y} points
+            function drawSmoothPath(targetCtx, points) {
+                if (points.length < 2) return;
+                targetCtx.beginPath();
+                targetCtx.moveTo(points[0].x, points[0].y);
+                if (points.length === 2) {
+                    targetCtx.lineTo(points[1].x, points[1].y);
+                } else {
+                    for (var i = 1; i < points.length - 1; i++) {
+                        var mx = (points[i].x + points[i + 1].x) / 2;
+                        var my = (points[i].y + points[i + 1].y) / 2;
+                        targetCtx.quadraticCurveTo(points[i].x, points[i].y, mx, my);
+                    }
+                    var last = points[points.length - 1];
+                    targetCtx.lineTo(last.x, last.y);
+                }
             }
 
             function animate() {
                 if (!isAnimating) return;
+                frame++;
 
                 // Smooth cursor — liquid/floaty feel
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
-                smoothX += (targetX - smoothX) * 0.09;
-                smoothY += (targetY - smoothY) * 0.09;
+                smoothX += (targetX - smoothX) * 0.1;
+                smoothY += (targetY - smoothY) * 0.1;
 
                 var vx = smoothX - prevX;
                 var vy = smoothY - prevY;
                 var speed = Math.sqrt(vx * vx + vy * vy);
 
-                // Drop trail blobs — more frequent for continuous strokes
-                if (isActive && speed > 0.8) {
-                    trail.push({
-                        x: smoothX, y: smoothY,
-                        vy: 0,
-                        age: 0,
-                        radius: blobRadius * (0.55 + Math.random() * 0.35),
-                        gravity: 0.04 + Math.random() * 0.06
-                    });
+                // Add trail positions — frequent for smooth strokes
+                if (isActive && speed > 0.5) {
+                    trail.push({ x: smoothX, y: smoothY, age: 0 });
                     if (trail.length > maxTrail) trail.shift();
                 }
 
-                // Age trail — gentle gravity pulls drops down like liquid
+                // Age trail — no gravity, just fade
                 for (var i = trail.length - 1; i >= 0; i--) {
-                    var t = trail[i];
-                    t.age++;
-                    t.vy += t.gravity;
-                    t.y += t.vy;
-                    t.gravity += 0.008;
-                    t.radius *= 0.9985;
-                    if (t.age > trailLifetime || t.y > H + 80) trail.splice(i, 1);
+                    trail[i].age++;
+                    if (trail[i].age > trailLifetime) trail.splice(i, 1);
                 }
 
                 prevX = smoothX;
@@ -1020,7 +1047,6 @@
                 ctx.clearRect(0, 0, W, H);
                 if (imgsReady < 2) { requestAnimationFrame(animate); return; }
 
-                // Same cover rect for BOTH images — pixel-perfect alignment
                 var r = getCoverRect(topImg);
 
                 // 1. Draw base (rival) image — revealed underneath
@@ -1039,54 +1065,54 @@
                 octx.globalCompositeOperation = 'source-over';
                 octx.drawImage(topImg, r.x, r.y, r.w, r.h);
 
-                // Punch liquid holes using pre-rendered sprite stamps
+                // Punch liquid holes
                 if (trail.length > 0 || isActive) {
                     octx.globalCompositeOperation = 'destination-out';
 
-                    // Trail blobs — stamp soft circles at each point
-                    for (var i = 0; i < trail.length; i++) {
-                        var t = trail[i];
-                        var life = 1 - (t.age / trailLifetime);
-                        var alpha = life * life * life; // cubic fade — stays strong then fades fast
-                        var rad = t.radius * (0.5 + life * 0.5);
-                        stampBlob(octx, t.x, t.y, rad, alpha);
-                    }
+                    // TRAIL — multi-pass thick bezier stroke for soft feathered edges
+                    if (trail.length >= 2) {
+                        // Build path points including cursor
+                        var pathPts = [];
+                        for (var i = 0; i < trail.length; i++) pathPts.push(trail[i]);
+                        if (isActive && smoothX > -500) pathPts.push({ x: smoothX, y: smoothY, age: 0 });
 
-                    // Fill gaps between consecutive trail points — no holes in the stroke
-                    for (var i = 1; i < trail.length; i++) {
-                        var a = trail[i - 1], b = trail[i];
-                        var dx = b.x - a.x, dy = b.y - a.y;
-                        var dist = Math.sqrt(dx * dx + dy * dy);
-                        var spacing = blobRadius * 0.35;
-                        if (dist < spacing) continue;
-                        var steps = Math.ceil(dist / spacing);
-                        for (var s = 1; s < steps; s++) {
-                            var frac = s / steps;
-                            var lifeA = 1 - (a.age / trailLifetime);
-                            var lifeB = 1 - (b.age / trailLifetime);
-                            var life = lifeA + (lifeB - lifeA) * frac;
-                            var alpha = life * life * life;
-                            var rad = (a.radius + (b.radius - a.radius) * frac) * (0.5 + life * 0.5);
-                            stampBlob(octx, a.x + dx * frac, a.y + dy * frac, rad, alpha);
+                        // Soft feathered edge: multiple passes from thick+transparent to thin+opaque
+                        var passes = [
+                            { widthMul: 1.6, alpha: 0.06 },
+                            { widthMul: 1.35, alpha: 0.12 },
+                            { widthMul: 1.15, alpha: 0.25 },
+                            { widthMul: 0.95, alpha: 0.5 },
+                            { widthMul: 0.7, alpha: 0.85 },
+                            { widthMul: 0.45, alpha: 1.0 }
+                        ];
+
+                        octx.lineCap = 'round';
+                        octx.lineJoin = 'round';
+
+                        for (var p = 0; p < passes.length; p++) {
+                            octx.lineWidth = blobRadius * passes[p].widthMul;
+                            octx.strokeStyle = 'rgba(0,0,0,' + passes[p].alpha + ')';
+                            drawSmoothPath(octx, pathPts);
+                            octx.stroke();
                         }
                     }
 
-                    // Connect last trail point to cursor — seamless bridge
-                    if (isActive && smoothX > -500 && trail.length > 0) {
-                        var last = trail[trail.length - 1];
-                        var dx = smoothX - last.x, dy = smoothY - last.y;
-                        var dist = Math.sqrt(dx * dx + dy * dy);
-                        var spacing = blobRadius * 0.3;
-                        var steps = Math.ceil(dist / spacing);
-                        for (var s = 1; s <= steps; s++) {
-                            var frac = s / Math.max(steps, 1);
-                            stampBlob(octx, last.x + dx * frac, last.y + dy * frac, blobRadius * (0.6 + frac * 0.4), 1);
-                        }
-                    }
-
-                    // Main cursor blob — large and fully opaque
+                    // CURSOR BLOB — organic wobbly shape, not a circle
                     if (isActive && smoothX > -500) {
-                        stampBlob(octx, smoothX, smoothY, blobRadius * 1.15, 1);
+                        // Multi-pass for soft edge on cursor blob too
+                        var blobPasses = [
+                            { scale: 1.35, alpha: 0.08 },
+                            { scale: 1.2, alpha: 0.2 },
+                            { scale: 1.08, alpha: 0.5 },
+                            { scale: 1.0, alpha: 1.0 }
+                        ];
+                        for (var p = 0; p < blobPasses.length; p++) {
+                            octx.globalAlpha = blobPasses[p].alpha;
+                            octx.fillStyle = '#000';
+                            drawOrganicBlob(octx, smoothX, smoothY, blobRadius * blobPasses[p].scale, vx, vy);
+                            octx.fill();
+                        }
+                        octx.globalAlpha = 1;
                     }
                 }
 
