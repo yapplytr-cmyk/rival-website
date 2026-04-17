@@ -970,7 +970,7 @@
                 canvas.style.width = W + 'px';
                 canvas.style.height = H + 'px';
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                blobRadius = W <= 480 ? 40 : W <= 768 ? 55 : 70;
+                blobRadius = W <= 480 ? 60 : W <= 768 ? 85 : 110;
                 // All canvases at DPR resolution for crisp retina output
                 maskCanvas.width = W * dpr;
                 maskCanvas.height = H * dpr;
@@ -1021,33 +1021,41 @@
             // ========== DIRECTIONAL BRUSH STROKE ==========
             // Draws an elongated ellipse stretched in the direction of movement
 
+            // Smooth angle — interpolates so rotation doesn't snap
+            var smoothAngle = 0;
+
+            function lerpAngle(from, to, t) {
+                var diff = to - from;
+                // Wrap to [-PI, PI]
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                return from + diff * t;
+            }
+
             function stampBrush(cx, cy, size, angle, stretch) {
-                // Draw an elliptical soft brush — stretched along movement direction
                 var rx = size;
-                var ry = size * (0.45 + stretch * 0.55); // rounder when slow, elongated when fast
+                var ry = size * (0.5 + (1 - stretch) * 0.5); // round when slow, elongated when fast
                 maskCtx.save();
                 maskCtx.translate(cx, cy);
                 maskCtx.rotate(angle);
-                // Radial gradient for soft edges
+                maskCtx.scale(1, ry / rx);
                 var grad = maskCtx.createRadialGradient(0, 0, 0, 0, 0, rx);
                 grad.addColorStop(0, 'rgba(255,255,255,1)');
-                grad.addColorStop(0.5, 'rgba(255,255,255,0.95)');
-                grad.addColorStop(0.75, 'rgba(255,255,255,0.5)');
-                grad.addColorStop(0.92, 'rgba(255,255,255,0.08)');
+                grad.addColorStop(0.45, 'rgba(255,255,255,0.95)');
+                grad.addColorStop(0.7, 'rgba(255,255,255,0.5)');
+                grad.addColorStop(0.88, 'rgba(255,255,255,0.1)');
                 grad.addColorStop(1, 'rgba(255,255,255,0)');
                 maskCtx.fillStyle = grad;
-                maskCtx.scale(1, ry / rx);
                 maskCtx.beginPath();
                 maskCtx.arc(0, 0, rx, 0, Math.PI * 2);
                 maskCtx.fill();
                 maskCtx.restore();
             }
 
-            // Paint brush along cursor path
             function paintStroke(x1, y1, x2, y2, size, angle, stretch) {
                 var dx = x2 - x1, dy = y2 - y1;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                var spacing = size * 0.12;
+                var spacing = size * 0.1;
                 var steps = Math.max(1, Math.ceil(dist / spacing));
                 for (var i = 0; i <= steps; i++) {
                     var t = i / steps;
@@ -1059,7 +1067,7 @@
             var dissolveActive = false;
             var dissolveFactor = 1;
 
-            // Preload video — seek to frame 0 so first frame is decoded and ready
+            // Preload video
             var transVideo = document.getElementById('hero-transition-video');
             var videoReady = false;
             transVideo.addEventListener('canplaythrough', function() { videoReady = true; });
@@ -1068,21 +1076,21 @@
             function animate() {
                 if (!isAnimating) return;
 
-                // Smooth cursor — fluid trailing
+                // Smooth cursor
                 if (smoothX < -500) { smoothX = targetX; smoothY = targetY; }
                 smoothX += (targetX - smoothX) * 0.13;
                 smoothY += (targetY - smoothY) * 0.13;
 
-                // === DISSIPATION ===
+                // === DISSIPATION — aggressive fade-back to full opacity ===
                 fadeCtx.save();
                 fadeCtx.setTransform(1, 0, 0, 1, 0, 0);
                 fadeCtx.clearRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalAlpha = dissolveActive ? dissolveFactor : DISSIPATION;
                 fadeCtx.drawImage(maskCanvas, 0, 0);
                 fadeCtx.globalAlpha = 1;
-                // Flat subtract — aggressively kills low alpha to true zero
+                // Flat subtract kills low alpha to true zero — no lingering
                 fadeCtx.globalCompositeOperation = 'destination-out';
-                fadeCtx.fillStyle = 'rgba(0,0,0,0.06)';
+                fadeCtx.fillStyle = 'rgba(0,0,0,0.08)';
                 fadeCtx.fillRect(0, 0, W * dpr, H * dpr);
                 fadeCtx.globalCompositeOperation = 'source-over';
                 fadeCtx.restore();
@@ -1107,16 +1115,20 @@
                 if (isActive && !dissolveActive && smoothX > -500 && prevX > -500) {
                     var dx = smoothX - prevX, dy = smoothY - prevY;
                     var speed = Math.sqrt(dx * dx + dy * dy);
-                    var angle = Math.atan2(dy, dx);
-                    // Stretch: 0 = round (idle), 1 = very elongated (fast)
-                    var stretch = Math.min(speed / 40, 1);
-                    // Brush gets slightly larger with speed
-                    var dynSize = blobRadius * (1 + Math.min(speed / 60, 0.3));
+
+                    // Smooth angle interpolation — no snapping
+                    var rawAngle = Math.atan2(dy, dx);
+                    if (speed > 0.5) {
+                        smoothAngle = lerpAngle(smoothAngle, rawAngle, 0.15);
+                    }
+
+                    var stretch = Math.min(speed / 35, 1);
+                    var dynSize = blobRadius * (1 + Math.min(speed / 50, 0.4));
 
                     if (speed > 0.3) {
-                        paintStroke(prevX, prevY, smoothX, smoothY, dynSize, angle, stretch);
+                        paintStroke(prevX, prevY, smoothX, smoothY, dynSize, smoothAngle, stretch);
                     }
-                    stampBrush(smoothX, smoothY, dynSize, angle, stretch);
+                    stampBrush(smoothX, smoothY, dynSize, smoothAngle, stretch);
                 }
 
                 prevX = smoothX;
