@@ -476,27 +476,27 @@
             opacity: 0 !important;
             transform: translateY(-10px);
             filter: blur(8px);
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                        filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none !important;
         }
         .hero-btn-wrap.fading {
             opacity: 0 !important;
             transform: translate(-50%, -50%) scale(0.92);
             filter: blur(12px);
-            transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.7s cubic-bezier(0.4, 0, 0.2, 1),
-                        filter 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none !important;
         }
         .touch-hint.fading {
             opacity: 0 !important;
             transform: translateX(-50%) translateY(8px);
             filter: blur(6px);
-            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-                        filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none !important;
         }
 
@@ -510,14 +510,14 @@
         }
         .interactive-hero.fading-out {
             opacity: 0;
-            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .interactive-hero.gone { display: none; }
 
         /* Main site hidden initially — fades in from pure black */
         .main-site {
             opacity: 0;
-            transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .main-site.revealed { opacity: 1; }
 
@@ -1395,10 +1395,10 @@
                     mainSite.classList.add('revealed');
                     document.body.style.overflow = '';
                     window.scrollTo(0, 0);
-                }, 400);
+                }, 150);
                 setTimeout(function() {
                     hero.classList.add('gone');
-                }, 1300);
+                }, 700);
             }
 
             enterBtn.addEventListener('click', function() {
