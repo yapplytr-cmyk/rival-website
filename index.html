@@ -426,6 +426,26 @@
             transform: translateX(100%);
         }
 
+        /* Arena lang toggle — fixed top center, smaller & minimal */
+        .arena-lang-toggle {
+            position: fixed;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            right: auto;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .main-site.revealed .arena-lang-toggle {
+            opacity: 1;
+            pointer-events: auto;
+            transition-delay: 0.5s;
+        }
+
         /* RIVAL brand — ABOVE the girl's head, truly centered */
         .hero-brand-text {
             position: absolute;
@@ -640,14 +660,21 @@
             font-size: clamp(18px, 3vw, 28px);
             font-weight: 300;
             color: rgba(255,255,255,0.7);
-            letter-spacing: 0.05em;
+            letter-spacing: 0.02em;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: baseline;
+            gap: 0 0.35em;
         }
         .arena-word {
             display: inline-block;
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
-            margin: 0 4px;
+        }
+        .arena-word:empty {
+            display: none;
         }
         .arena-word-accent {
             color: #8B5CF6;
@@ -1538,6 +1565,13 @@
 
     <!-- ========== ARENA PAGE (revealed after Enter) ========== -->
     <div class="main-site" id="main-site">
+
+        <!-- Persistent language toggle for arena pages -->
+        <div class="arena-lang-toggle lang-toggle" id="arena-lang-toggle">
+            <button class="lang-btn active" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="tr">TR</button>
+            <div class="lang-slider"></div>
+        </div>
 
         <!-- SCREEN 1: Intro with RIVAL text + scroll arrow -->
         <div class="arena-page arena-intro" id="arena-intro">
@@ -2842,14 +2876,13 @@
                     span.textContent = t.next;
                 });
 
-                // Update toggle active state
-                var toggle = document.getElementById('lang-toggle');
-                if (toggle) {
-                    toggle.setAttribute('data-active', lang);
-                    toggle.querySelectorAll('.lang-btn').forEach(function(btn) {
+                // Update ALL toggle active states (hero + arena)
+                document.querySelectorAll('.lang-toggle').forEach(function(tog) {
+                    tog.setAttribute('data-active', lang);
+                    tog.querySelectorAll('.lang-btn').forEach(function(btn) {
                         btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
                     });
-                }
+                });
 
                 // Update html lang attribute
                 document.documentElement.lang = lang;
@@ -2870,10 +2903,9 @@
             var detectedLang = detectLang();
             applyLang(detectedLang);
 
-            // Toggle click handler
-            var toggle = document.getElementById('lang-toggle');
-            if (toggle) {
-                toggle.addEventListener('click', function(e) {
+            // Toggle click handler — works for all .lang-toggle instances
+            document.querySelectorAll('.lang-toggle').forEach(function(tog) {
+                tog.addEventListener('click', function(e) {
                     var btn = e.target.closest('.lang-btn');
                     if (!btn) return;
                     var lang = btn.getAttribute('data-lang');
@@ -2881,7 +2913,7 @@
                         applyLang(lang);
                     }
                 });
-            }
+            });
         })();
     </script>
 </body>
